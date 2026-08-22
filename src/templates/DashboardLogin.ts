@@ -63,12 +63,12 @@ export function renderDashboardLogin(
   let currentVideoIndex = 0;
 
   videoElem.src = videoPlaylist[currentVideoIndex];
-  videoElem.play().catch(() => {});
+  videoElem.play().catch(() => { });
 
   videoElem.addEventListener('ended', () => {
     currentVideoIndex = (currentVideoIndex + 1) % videoPlaylist.length;
     videoElem.src = videoPlaylist[currentVideoIndex];
-    videoElem.play().catch(() => {});
+    videoElem.play().catch(() => { });
   });
 
   videoBgContainer.appendChild(videoElem);
@@ -110,12 +110,12 @@ export function renderDashboardLogin(
     <form id="admin-login-form">
       <div class="form-group" style="margin-bottom: var(--space-4);">
         <label class="form-label">Username / Email Address</label>
-        <input type="text" class="form-control" id="login-username" value="${defaultUser}" placeholder="e.g. admin@soenrect.com" required />
+        <input type="text" class="form-control" id="login-username" value=" " placeholder="e.g. admin.official@soenrect.com" required />
       </div>
 
       <div class="form-group" style="margin-bottom: var(--space-5);">
         <label class="form-label">Password</label>
-        <input type="password" class="form-control" id="login-password" value="${defaultPass}" placeholder="Enter password" required />
+        <input type="password" class="form-control" id="login-password" value=" " placeholder="Enter password" required />
       </div>
 
       <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; justify-content: center; margin-bottom: var(--space-4);">
@@ -124,11 +124,11 @@ export function renderDashboardLogin(
     </form>
 
     <!-- CREDENTIALS HELPER BADGE -->
-    <div style="padding: 10px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 11px; color: var(--color-foreground-subtle);">
-      <div style="font-weight: bold; color: var(--color-accent); margin-bottom: 2px;">Environment Credentials (.env):</div>
-      <div>Username: <strong style="color: var(--color-foreground);">${defaultUser}</strong></div>
-      <div>Password: <strong style="color: var(--color-foreground);">${defaultPass}</strong></div>
-    </div>
+    // <div style="padding: 10px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 11px; color: var(--color-foreground-subtle);">
+    //   <div style="font-weight: bold; color: var(--color-accent); margin-bottom: 2px;">Environment Credentials (.env):</div>
+    //   <div>Username: <strong style="color: var(--color-foreground);">${defaultUser}</strong></div>
+    //   <div>Password: <strong style="color: var(--color-foreground);">${defaultPass}</strong></div>
+    // </div>
 
     <!-- BACK TO WELCOME LINK -->
     <div style="text-align: center; margin-top: var(--space-5);">
