@@ -13,11 +13,11 @@ export class AuthService {
 
   // --- ADMIN DASHBOARD AUTHENTICATION ---
   public static getAdminUsername(): string {
-    return (import.meta as any).env?.VITE_ADMIN_USERNAME || 'admin@soenrect.com';
+    return import.meta.env.VITE_ADMIN_USERNAME || 'admin@soenrect.com';
   }
 
   public static getAdminPassword(): string {
-    return (import.meta as any).env?.VITE_ADMIN_PASSWORD || 'soenrect2026';
+    return import.meta.env.VITE_ADMIN_PASSWORD || 'soenrect2026';
   }
 
   public static loginAdmin(usernameInput: string, passwordInput: string): boolean {

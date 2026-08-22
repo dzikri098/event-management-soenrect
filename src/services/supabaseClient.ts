@@ -6,8 +6,10 @@
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || '';
+// Vite embeds VITE_* env vars at build time using static analysis.
+// Must use import.meta.env.VITE_* directly (no TypeScript casting) for Vite to pick them up.
+const supabaseUrl: string = import.meta.env.VITE_SUPABASE_URL ?? '';
+const supabaseAnonKey: string = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
 
 export const isSupabaseConfigured = (): boolean => {
   return Boolean(
