@@ -86,9 +86,6 @@ export function renderDashboardLogin(
   loginCard.style.backdropFilter = 'blur(12px)';
   loginCard.style.setProperty('-webkit-backdrop-filter', 'blur(12px)');
 
-  const defaultUser = AuthService.getAdminUsername();
-  const defaultPass = AuthService.getAdminPassword();
-
   loginCard.innerHTML = `
     <!-- HEADER BRANDING -->
     <div style="text-align: center; margin-bottom: var(--space-6);">
