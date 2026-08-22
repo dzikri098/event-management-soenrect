@@ -298,8 +298,22 @@ class DashboardApp {
   }
 
   public render(): void {
+    const isStandalone = ['welcome', 'login', 'crew-portal-login', 'crew-portal'].includes(this.activeTemplate);
+
+    if (!isStandalone) {
+      // Ensure shell elements are fully visible before render to avoid layout glitch
+      if (this.sidebarRoot) this.sidebarRoot.style.display = 'flex';
+      if (this.headerRoot) this.headerRoot.style.display = 'flex';
+    }
+
     this.renderShell();
-    this.renderContentOnly();
+
+    // Use requestAnimationFrame to allow the browser to fully paint the shell
+    // before injecting content — this prevents the "berantakan" layout bug
+    // that occurs when transitioning from a standalone page (login) to the dashboard
+    requestAnimationFrame(() => {
+      this.renderContentOnly();
+    });
   }
 }
 

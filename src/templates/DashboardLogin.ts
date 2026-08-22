@@ -148,13 +148,41 @@ export function renderDashboardLogin(
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
-    const success = AuthService.loginAdmin(userInput.value, passInput.value);
 
-    if (success) {
-      onNavigate('executive-overview');
-    } else {
-      if (errorAlert) errorAlert.style.display = 'block';
+    const submitBtn = loginCard.querySelector('button[type="submit"]') as HTMLButtonElement;
+
+    // Show loading state
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `
+        <svg style="animation: spin 0.8s linear infinite; width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+        </svg>
+        Signing in...
+      `;
     }
+
+    const style = document.createElement('style');
+    style.textContent = `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`;
+    if (!document.querySelector('[data-spin-style]')) {
+      style.setAttribute('data-spin-style', '1');
+      document.head.appendChild(style);
+    }
+
+    // Delay slightly to show loading state + allow DOM to flush before navigating
+    setTimeout(() => {
+      const success = AuthService.loginAdmin(userInput.value, passInput.value);
+
+      if (success) {
+        onNavigate('executive-overview');
+      } else {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = 'Sign In to Dashboard';
+        }
+        if (errorAlert) errorAlert.style.display = 'block';
+      }
+    }, 350);
   });
 
   loginCard.querySelector('#btn-back-welcome')?.addEventListener('click', () => {
