@@ -6,10 +6,16 @@
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Vite embeds VITE_* env vars at build time using static analysis.
-// Must use import.meta.env.VITE_* directly (no TypeScript casting) for Vite to pick them up.
-const supabaseUrl: string = import.meta.env.VITE_SUPABASE_URL ?? '';
-const supabaseAnonKey: string = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
+// NOTE: Supabase anon/publishable key is safe to include in client-side code.
+// Security is enforced server-side via Row Level Security (RLS) policies.
+// Env vars are preferred for overrides; hardcoded values are production fallbacks.
+const supabaseUrl: string =
+  import.meta.env.VITE_SUPABASE_URL ||
+  'https://bbrfstmvmyyrsnelnrtr.supabase.co';
+
+const supabaseAnonKey: string =
+  import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  'sb_publishable_6Z9whHAI7noBIW4axK_Qjg_9TuBfbc7';
 
 export const isSupabaseConfigured = (): boolean => {
   return Boolean(
