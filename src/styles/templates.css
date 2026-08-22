@@ -1,0 +1,298 @@
+/* ==========================================================================
+   PAGE COMPOSITION TEMPLATES — REUSABLE DASHBOARD STRUCTURES WITH SPACING
+   ========================================================================== */
+
+/* --- TEMPLATE 1: EXECUTIVE OVERVIEW GRID PATTERN --- */
+.template-executive-overview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  width: 100%;
+}
+
+.kpi-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-5);
+  margin-bottom: var(--space-2);
+}
+
+@media (max-width: 1200px) {
+  .kpi-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .kpi-grid-4 {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+}
+
+.primary-visualization-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--space-6);
+  margin-bottom: var(--space-2);
+}
+
+@media (max-width: 1024px) {
+  .primary-visualization-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+  }
+}
+
+.executive-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: var(--space-6);
+  align-items: start;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.executive-main-grid > * {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1024px) {
+  .executive-main-grid {
+    grid-template-columns: 1fr !important;
+    gap: var(--space-5);
+  }
+}
+
+/* --- TEMPLATE 2: ANALYTICS & TELEMETRY SPLIT PATTERN --- */
+.template-analytics-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  width: 100%;
+}
+
+.two-column-equal {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-6);
+  margin-bottom: var(--space-2);
+}
+
+@media (max-width: 900px) {
+  .two-column-equal {
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+  }
+}
+
+/* --- TEMPLATE 3: OPERATIONS & DATA MANAGEMENT TABLE PATTERN --- */
+.template-data-management {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  width: 100%;
+}
+
+.state-switcher-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background-color: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-5);
+}
+
+.state-switcher-title {
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* --- CREW PORTAL RESPONSIVE STYLES --- */
+.crew-portal-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+@media (max-width: 900px) {
+  .crew-portal-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 540px) {
+  .crew-portal-stats-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+}
+
+.crew-portal-profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+@media (max-width: 640px) {
+  .crew-portal-profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .crew-portal-profile-header > div {
+    width: 100%;
+  }
+}
+
+/* --- BOTTOM FLOATING NAVBAR FOR CREW PORTAL --- */
+.crew-portal-floating-nav {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(18, 18, 21, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--color-accent-border);
+  border-radius: var(--radius-full);
+  padding: 6px 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), var(--shadow-glow-sm);
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.floating-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: transparent;
+  color: var(--color-foreground-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.floating-nav-btn:hover {
+  color: var(--color-foreground);
+  background: var(--color-surface-elevated);
+}
+
+.floating-nav-btn.active {
+  background: var(--color-accent);
+  color: #FFFFFF;
+  box-shadow: var(--shadow-glow-sm);
+}
+
+/* --- CREW PORTAL 3-COLUMN DESKTOP GRID & SUBTABS --- */
+.crew-portal-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1200px) and (min-width: 901px) {
+  .crew-portal-grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .crew-portal-grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Hide Floating Navbar on Desktop Screens */
+@media (min-width: 901px) {
+  .crew-portal-floating-nav {
+    display: none !important;
+  }
+}
+
+/* Mobile Subtabs Section Visibility & Layout Overflow Fixes */
+@media (max-width: 900px) {
+  .crew-portal-section.is-hidden-mobile {
+    display: none !important;
+  }
+
+  .crew-portal-section {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .crew-portal-section .card {
+    padding: var(--space-4) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  .crew-portal-gear-badge {
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    display: inline-flex !important;
+    text-align: left !important;
+    max-width: 100% !important;
+    line-height: 1.4 !important;
+  }
+
+  .crew-portal-floating-nav {
+    max-width: calc(100vw - 24px) !important;
+    box-sizing: border-box !important;
+  }
+
+  .floating-nav-btn {
+    padding: 7px 12px !important;
+    font-size: 11px !important;
+  }
+}
+
+/* --- WELCOME SETUP & LOGIN CARDS RESPONSIVE STYLES --- */
+.welcome-portal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-5);
+  text-align: left;
+}
+
+.auth-login-card {
+  max-width: 460px;
+  width: 100%;
+  padding: var(--space-8);
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .welcome-portal-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  .auth-login-card {
+    padding: var(--space-5) var(--space-4) !important;
+    border-radius: var(--radius-md) !important;
+  }
+}

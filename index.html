@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/logo/LogoArt.png" />
+    <title>Soenrect — Event Production Operations Platform</title>
+    <meta name="description" content="Production UI System Architecture & Foundation for Soenrect Management Dashboard" />
+    
+    <!-- Design System Stylesheets -->
+    <link rel="stylesheet" href="/src/styles/tokens.css" />
+    <link rel="stylesheet" href="/src/styles/foundations.css" />
+    <link rel="stylesheet" href="/src/styles/primitives.css" />
+    <link rel="stylesheet" href="/src/styles/components.css" />
+    <link rel="stylesheet" href="/src/styles/shell.css" />
+    <link rel="stylesheet" href="/src/styles/templates.css" />
+  </head>
+  <body>
+    <!-- MOBILE SIDEBAR BACKDROP OVERLAY -->
+    <div id="app-sidebar-backdrop" class="sidebar-backdrop"></div>
+
+    <div id="app" class="app-layout">
+      <!-- SIDEBAR SLOT -->
+      <aside id="app-sidebar-root"></aside>
+
+      <!-- MAIN CONTENT SLOT -->
+      <main class="app-main">
+        <header id="app-header-root"></header>
+        <section id="app-content-root" class="app-content"></section>
+      </main>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
