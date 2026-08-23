@@ -74,32 +74,50 @@ export class CategoryStoreService {
   ];
 
   public static async initialize(): Promise<void> {
+    // Always seed localStorage with defaults first as immediate fallback
+    if (!localStorage.getItem(this.STORAGE_KEY)) {
+      this.saveCategoryGroups(this.defaultCategoryGroups);
+    }
+
     if (isSupabaseConfigured() && supabase) {
       try {
         const { data, error } = await supabase.from('category_settings').select('*');
-        if (!error && data && data.length > 0) {
+
+        if (error) {
+          console.warn('Supabase category fetch error, using local data:', error.message);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          // Supabase has data — sync to localStorage for offline use
           const groups: MasterCategoryGroup[] = data.map((row: any) => ({
             id: row.id,
             name: row.name,
             moduleKey: row.module_key as CategoryModuleKey,
             description: row.description || '',
-            items: row.items || []
+            items: Array.isArray(row.items) ? row.items : []
           }));
           this.saveCategoryGroups(groups);
-        } else if (data && data.length === 0) {
-          // Populate Supabase with initial defaults
+          console.info('Categories synced from Supabase:', groups.length, 'groups.');
+        } else {
+          // Supabase table is empty — seed it with defaults using upsert
+          console.info('Seeding Supabase category_settings with defaults...');
           for (const group of this.defaultCategoryGroups) {
-            await supabase.from('category_settings').insert({
+            const { error: insertError } = await supabase.from('category_settings').upsert({
               id: group.id,
               name: group.name,
               module_key: group.moduleKey,
               description: group.description,
               items: group.items
             });
+            if (insertError) {
+              console.warn('Failed to seed category group:', group.id, insertError.message);
+            }
           }
+          this.saveCategoryGroups(this.defaultCategoryGroups);
         }
       } catch (err) {
-        console.warn('Failed to sync categories with Supabase.', err);
+        console.warn('Failed to sync categories with Supabase, using local cache.', err);
       }
     }
   }

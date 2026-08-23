@@ -91,7 +91,7 @@ export async function renderProjectCrewDetail(
       </div>
     </div>
 
-    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); padding: var(--space-5); background-color: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md);">
+    <div class="project-logistics-grid">
       <div>
         <div style="font-size: 11px; font-weight: bold; text-transform: uppercase; color: var(--color-foreground-subtle); letter-spacing: 0.05em;">Venue Name & Location</div>
         <div style="font-size: var(--text-base); font-weight: 600; color: var(--color-foreground); margin-top: 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
@@ -942,14 +942,20 @@ function openAssignCrewModal(
     projects.forEach((p) => {
       if (p.status !== 'Completed') {
         p.crewList?.forEach((crew) => {
-          if (crew.assignedEquipmentIds?.includes(eqId)) {
-            count++;
+          if (crew.assignedEquipmentIds) {
+            count += crew.assignedEquipmentIds.filter((id) => id === eqId).length;
           }
         });
       }
     });
     return count;
   };
+
+  const availableItemsCount = equipmentList.filter((eq) => {
+    const allocated = getEqAllocatedCount(eq.id);
+    const remaining = Math.max(0, eq.quantity - allocated);
+    return (eq.status === 'Available' || eq.status === 'In Use') && remaining > 0;
+  }).length;
 
   const modalHtml = `
     <div>
@@ -961,13 +967,13 @@ function openAssignCrewModal(
         <label class="form-label">Select Crew Member (From Data Crew Directory)</label>
         <select class="form-control" id="assign-crew-member-select">
           ${crewDirectory.length === 0
-      ? `<option value="">No crew members found in directory</option>`
-      : crewDirectory
-        .map(
-          (c) => `<option value="${c.id}" data-name="${c.name}" data-role="${c.role}" data-phone="${c.phone}">${c.name} &mdash; ${c.role} (${c.phone})</option>`
-        )
-        .join('')
-    }
+            ? `<option value="">No crew members found in directory</option>`
+            : crewDirectory
+                .map(
+                  (c) => `<option value="${c.id}" data-name="${c.name}" data-role="${c.role}" data-phone="${c.phone}">${c.name} &mdash; ${c.role} (${c.phone})</option>`
+                )
+                .join('')
+          }
         </select>
       </div>
 
@@ -977,70 +983,91 @@ function openAssignCrewModal(
       </div>
 
       <div class="form-group">
-        <label class="form-label" style="margin-bottom: 8px;">Select Equipment Gear to Allocate (Check all that apply)</label>
-        <div style="max-height: 250px; overflow-y: auto; padding: 12px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 8px;">
+        <label class="form-label" style="margin-bottom: 8px;">Select Equipment Gear & Quantities to Allocate</label>
+        
+        ${equipmentList.length === 0
+          ? `<div style="padding: 14px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md); text-align: center; color: var(--color-foreground-muted); font-size: 12.5px;">
+              ⚠️ Inventaris peralatan kosong. Belum ada barang peralatan yang terdaftar.
+             </div>`
+          : availableItemsCount === 0
+          ? `<div style="padding: 12px 14px; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-danger); border-radius: var(--radius-md); color: var(--color-danger); font-size: 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              <span>Perhatian: Semua barang peralatan di inventaris saat ini sedang <strong>habis terpakai / out of stock</strong> atau dalam perbaikan.</span>
+             </div>`
+          : ''
+        }
+
+        <div style="max-height: 280px; overflow-y: auto; padding: 12px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 8px;">
           ${equipmentList.length === 0
-      ? `<div style="font-size: 12px; color: var(--color-foreground-subtle); padding: 8px; text-align: center;">No equipment gear items in inventory</div>`
-      : equipmentList
-        .map((eq) => {
-          const allocated = getEqAllocatedCount(eq.id);
-          const remaining = Math.max(0, eq.quantity - allocated);
-          const isAvailable = (eq.status === 'Available' || eq.status === 'In Use') && remaining > 0;
+            ? `<div style="font-size: 12px; color: var(--color-foreground-subtle); padding: 8px; text-align: center;">No equipment gear items in inventory</div>`
+            : equipmentList
+                .map((eq) => {
+                  const allocated = getEqAllocatedCount(eq.id);
+                  const remaining = Math.max(0, eq.quantity - allocated);
+                  const isAvailable = (eq.status === 'Available' || eq.status === 'In Use') && remaining > 0;
 
-          return `
-            <div class="premium-gear-card ${isAvailable ? '' : 'disabled'}" 
-                 data-eq-id="${eq.id}" 
-                 style="display: flex; gap: 14px; padding: 14px 16px; background: var(--color-surface-elevated, #18181b); border: 1px solid var(--color-border, rgba(255,255,255,0.08)); border-radius: 12px; cursor: ${isAvailable ? 'pointer' : 'not-allowed'}; opacity: ${isAvailable ? 1 : 0.55}; transition: all 0.2s ease-in-out; position: relative;"
-                 onclick="const cb = this.querySelector('input'); if (cb && !cb.disabled) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); this.classList.toggle('selected', cb.checked); }"
-            >
-              <div style="display: flex; align-items: center; height: 20px;">
-                <input type="checkbox" class="assign-gear-checkbox" value="${eq.id}" 
-                       ${!isAvailable ? 'disabled' : ''} 
-                       style="width: 18px; height: 18px; cursor: ${isAvailable ? 'pointer' : 'not-allowed'}; accent-color: var(--color-accent, #3b82f6);"
-                       onclick="event.stopPropagation();"
-                       onchange="this.closest('.premium-gear-card').classList.toggle('selected', this.checked);"
-                />
-              </div>
-              <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
-                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; width: 100%;">
-                  <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                    <strong style="color: var(--color-foreground, #ffffff); font-size: 13.5px;">${eq.name}</strong>
-                    <span style="font-size: 10px; color: var(--color-foreground-muted, #a1a1aa); background: var(--color-surface, rgba(255,255,255,0.04)); padding: 2px 8px; border-radius: 99px; font-weight: 600; border: 1px solid rgba(255,255,255,0.04);">${eq.category}</span>
-                  </div>
-                  <div>
-                    ${isAvailable 
-                      ? `<span class="badge badge-success" style="font-size: 10.5px; font-weight: 600; padding: 3px 10px; border-radius: 99px; display: inline-flex; align-items: center; gap: 4px;">
-                           <span class="badge-dot"></span> ${remaining} of ${eq.quantity} Available
-                         </span>`
-                      : `<span class="badge badge-destructive" style="font-size: 10.5px; font-weight: 600; padding: 3px 10px; border-radius: 99px; display: inline-flex; align-items: center; gap: 4px;">
-                           <span class="badge-dot" style="background-color: var(--color-destructive);"></span> ${eq.status === 'Maintenance' ? 'In Maintenance' : eq.status === 'Retired' ? 'Retired' : 'Out of Stock'}
-                         </span>`
-                    }
-                  </div>
-                </div>
+                  return `
+                    <div class="premium-gear-card ${isAvailable ? '' : 'disabled'}" 
+                         data-eq-id="${eq.id}" 
+                         style="display: flex; gap: 14px; padding: 14px 16px; background: var(--color-surface-elevated, #18181b); border: 1px solid var(--color-border, rgba(255,255,255,0.08)); border-radius: 12px; cursor: ${isAvailable ? 'pointer' : 'not-allowed'}; opacity: ${isAvailable ? 1 : 0.55}; transition: all 0.2s ease-in-out; position: relative;"
+                         onclick="const cb = this.querySelector('input[type=checkbox]'); if (cb && !cb.disabled) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); this.classList.toggle('selected', cb.checked); }"
+                    >
+                      <div style="display: flex; align-items: center; height: 20px;">
+                        <input type="checkbox" class="assign-gear-checkbox" value="${eq.id}" 
+                               ${!isAvailable ? 'disabled' : ''} 
+                               style="width: 18px; height: 18px; cursor: ${isAvailable ? 'pointer' : 'not-allowed'}; accent-color: var(--color-accent, #3b82f6);"
+                               onclick="event.stopPropagation();"
+                               onchange="this.closest('.premium-gear-card').classList.toggle('selected', this.checked);"
+                        />
+                      </div>
+                      <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; width: 100%;">
+                          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <strong style="color: var(--color-foreground, #ffffff); font-size: 13.5px;">${eq.name}</strong>
+                            <span style="font-size: 10px; color: var(--color-foreground-muted, #a1a1aa); background: var(--color-surface, rgba(255,255,255,0.04)); padding: 2px 8px; border-radius: 99px; font-weight: 600; border: 1px solid rgba(255,255,255,0.04);">${eq.category}</span>
+                          </div>
+                          <div>
+                            ${isAvailable 
+                              ? `<span class="badge badge-success" style="font-size: 10.5px; font-weight: 600; padding: 3px 10px; border-radius: 99px; display: inline-flex; align-items: center; gap: 4px;">
+                                   <span class="badge-dot"></span> ${remaining} of ${eq.quantity} Available
+                                 </span>`
+                              : `<span class="badge badge-destructive" style="font-size: 10.5px; font-weight: 600; padding: 3px 10px; border-radius: 99px; display: inline-flex; align-items: center; gap: 4px;">
+                                   <span class="badge-dot" style="background-color: var(--color-destructive);"></span> ${eq.status === 'Maintenance' ? 'In Maintenance' : eq.status === 'Retired' ? 'Retired' : 'Out of Stock / Fully Allocated'}
+                                 </span>`
+                            }
+                          </div>
+                        </div>
 
-                <div style="font-size: 11px; color: var(--color-foreground-muted, #a1a1aa); display: flex; flex-direction: column; gap: 4px; line-height: 1.4;">
-                  <div style="display: flex; gap: 16px; flex-wrap: wrap;">
-                    <span><strong>S/N:</strong> <span class="font-mono" style="color: var(--color-foreground-strong, #ffffff);">${eq.serialNumber}</span></span>
-                    <span><strong>Status:</strong> <span style="color: ${eq.status === 'Available' ? 'var(--color-success)' : 'var(--color-warning)'}">${eq.status}</span></span>
-                  </div>
-                  ${eq.bundledTools && eq.bundledTools.length > 0 
-                    ? `<div style="background: rgba(0,0,0,0.15); padding: 6px 10px; border-radius: 6px; border-left: 3px solid var(--color-border-strong, #3f3f46); margin-top: 4px;">
-                         <strong style="color: var(--color-foreground-strong, #ffffff);">Included Accessories:</strong> ${eq.bundledTools.join(', ')}
-                       </div>` 
-                    : ''
-                  }
-                  ${eq.additionalNotes 
-                    ? `<div style="font-style: italic; color: var(--color-foreground-subtle, #71717a); font-size: 11px;">"${eq.additionalNotes}"</div>` 
-                    : ''
-                  }
-                </div>
-              </div>
-            </div>
-          `;
-        })
-        .join('')
-    }
+                        <div style="font-size: 11px; color: var(--color-foreground-muted, #a1a1aa); display: flex; flex-direction: column; gap: 4px; line-height: 1.4;">
+                          <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
+                            <span><strong>S/N:</strong> <span class="font-mono" style="color: var(--color-foreground-strong, #ffffff);">${eq.serialNumber}</span></span>
+                            <span><strong>Status:</strong> <span style="color: ${eq.status === 'Available' ? 'var(--color-success)' : 'var(--color-warning)'}">${eq.status}</span></span>
+                          </div>
+                          
+                          <!-- QUANTITY SELECTOR PER PERSON -->
+                          <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,0.1);" onclick="event.stopPropagation();">
+                            <label style="font-size: 11px; font-weight: 600; color: var(--color-foreground);">Qty Alokasi untuk Crew Ini:</label>
+                            <input type="number" class="assign-gear-qty-input form-control" data-eq-id="${eq.id}" min="1" max="${remaining}" value="1" ${!isAvailable ? 'disabled' : ''} style="width: 70px; height: 26px; padding: 2px 6px; font-size: 11.5px; font-family: monospace;" />
+                            <span style="font-size: 10.5px; color: var(--color-foreground-subtle);">(Tersedia: ${remaining} Unit)</span>
+                          </div>
+
+                          ${eq.bundledTools && eq.bundledTools.length > 0 
+                            ? `<div style="background: rgba(0,0,0,0.15); padding: 6px 10px; border-radius: 6px; border-left: 3px solid var(--color-border-strong, #3f3f46); margin-top: 4px;">
+                                 <strong style="color: var(--color-foreground-strong, #ffffff);">Included Accessories:</strong> ${eq.bundledTools.join(', ')}
+                               </div>` 
+                            : ''
+                          }
+                          ${eq.additionalNotes 
+                            ? `<div style="font-style: italic; color: var(--color-foreground-subtle, #71717a); font-size: 11px;">"${eq.additionalNotes}"</div>` 
+                            : ''
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  `;
+                })
+                .join('')
+          }
         </div>
       </div>
     </div>
@@ -1080,7 +1107,14 @@ function openAssignCrewModal(
 
       const assignedEquipmentIds: string[] = [];
       checkboxes.forEach((cb) => {
-        if (cb.value) assignedEquipmentIds.push(cb.value);
+        if (cb.value) {
+          const card = cb.closest('.premium-gear-card');
+          const qtyInput = card?.querySelector('.assign-gear-qty-input') as HTMLInputElement;
+          const qty = Math.max(1, parseInt(qtyInput?.value || '1', 10));
+          for (let i = 0; i < qty; i++) {
+            assignedEquipmentIds.push(cb.value);
+          }
+        }
       });
 
       if (!project.crewList) project.crewList = [];
@@ -1136,14 +1170,21 @@ function openManageGearModal(
     projects.forEach((p) => {
       if (p.status !== 'Completed') {
         p.crewList?.forEach((crew) => {
-          if (crew.assignedEquipmentIds?.includes(eqId)) {
-            count++;
+          if (crew.assignedEquipmentIds) {
+            count += crew.assignedEquipmentIds.filter((id) => id === eqId).length;
           }
         });
       }
     });
     return count;
   };
+
+  const availableItemsCount = equipmentList.filter((eq) => {
+    const currentCrewQty = crewAssignment.assignedEquipmentIds.filter((id) => id === eq.id).length;
+    const allocated = getEqAllocatedCount(eq.id);
+    const remaining = Math.max(0, eq.quantity - allocated + currentCrewQty);
+    return (eq.status === 'Available' || eq.status === 'In Use') && remaining > 0;
+  }).length;
 
   const modalHtml = `
     <div>
@@ -1157,72 +1198,94 @@ function openManageGearModal(
       </div>
 
       <div class="form-group">
-        <label class="form-label" style="margin-bottom: 8px;">Allocated Equipment Gear List</label>
-        <div style="max-height: 250px; overflow-y: auto; padding: 12px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 8px;">
+        <label class="form-label" style="margin-bottom: 8px;">Allocated Equipment Gear List & Quantities</label>
+
+        ${equipmentList.length === 0
+          ? `<div style="padding: 14px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md); text-align: center; color: var(--color-foreground-muted); font-size: 12.5px;">
+              ⚠️ Inventaris peralatan kosong. Belum ada barang peralatan yang terdaftar.
+             </div>`
+          : availableItemsCount === 0
+          ? `<div style="padding: 12px 14px; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-danger); border-radius: var(--radius-md); color: var(--color-danger); font-size: 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              <span>Perhatian: Semua barang peralatan di inventaris saat ini sedang <strong>habis terpakai / out of stock</strong> atau dalam perbaikan.</span>
+             </div>`
+          : ''
+        }
+
+        <div style="max-height: 280px; overflow-y: auto; padding: 12px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 8px;">
           ${equipmentList.length === 0
-      ? `<div style="font-size: 12px; color: var(--color-foreground-subtle); padding: 8px; text-align: center;">No equipment gear items in inventory</div>`
-      : equipmentList
-        .map((eq) => {
-          const isCurrentlyAssigned = crewAssignment.assignedEquipmentIds.includes(eq.id);
-          const allocated = getEqAllocatedCount(eq.id);
-          const remaining = Math.max(0, eq.quantity - allocated);
-          const adjustedRemaining = remaining + (isCurrentlyAssigned ? 1 : 0);
-          const isAvailable = (eq.status === 'Available' || eq.status === 'In Use') && adjustedRemaining > 0;
+            ? `<div style="font-size: 12px; color: var(--color-foreground-subtle); padding: 8px; text-align: center;">No equipment gear items in inventory</div>`
+            : equipmentList
+                .map((eq) => {
+                  const currentCrewQty = crewAssignment.assignedEquipmentIds.filter((id) => id === eq.id).length;
+                  const isCurrentlyAssigned = currentCrewQty > 0;
+                  const allocated = getEqAllocatedCount(eq.id);
+                  const remaining = Math.max(0, eq.quantity - allocated);
+                  const adjustedRemaining = remaining + currentCrewQty;
+                  const isAvailable = (eq.status === 'Available' || eq.status === 'In Use') && adjustedRemaining > 0;
 
-          return `
-            <div class="premium-gear-card ${isAvailable ? '' : 'disabled'} ${isCurrentlyAssigned ? 'selected' : ''}" 
-                 data-eq-id="${eq.id}" 
-                 style="display: flex; gap: 14px; padding: 14px 16px; background: var(--color-surface-elevated, #18181b); border: 1px solid var(--color-border, rgba(255,255,255,0.08)); border-radius: 12px; cursor: ${isAvailable ? 'pointer' : 'not-allowed'}; opacity: ${isAvailable ? 1 : 0.55}; transition: all 0.2s ease-in-out; position: relative;"
-                 onclick="const cb = this.querySelector('input'); if (cb && !cb.disabled) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); this.classList.toggle('selected', cb.checked); }"
-            >
-              <div style="display: flex; align-items: center; height: 20px;">
-                <input type="checkbox" class="manage-gear-checkbox" value="${eq.id}" ${isCurrentlyAssigned ? 'checked' : ''} 
-                       ${!isAvailable ? 'disabled' : ''} 
-                       style="width: 18px; height: 18px; cursor: ${isAvailable ? 'pointer' : 'not-allowed'}; accent-color: var(--color-accent, #3b82f6);"
-                       onclick="event.stopPropagation();"
-                       onchange="this.closest('.premium-gear-card').classList.toggle('selected', this.checked);"
-                />
-              </div>
-              <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
-                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; width: 100%;">
-                  <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                    <strong style="color: var(--color-foreground, #ffffff); font-size: 13.5px;">${eq.name}</strong>
-                    <span style="font-size: 10px; color: var(--color-foreground-muted, #a1a1aa); background: var(--color-surface, rgba(255,255,255,0.04)); padding: 2px 8px; border-radius: 99px; font-weight: 600; border: 1px solid rgba(255,255,255,0.04);">${eq.category}</span>
-                  </div>
-                  <div>
-                    ${isAvailable 
-                      ? `<span class="badge badge-success" style="font-size: 10.5px; font-weight: 600; padding: 3px 10px; border-radius: 99px; display: inline-flex; align-items: center; gap: 4px;">
-                           <span class="badge-dot"></span> ${adjustedRemaining} of ${eq.quantity} Available
-                         </span>`
-                      : `<span class="badge badge-destructive" style="font-size: 10.5px; font-weight: 600; padding: 3px 10px; border-radius: 99px; display: inline-flex; align-items: center; gap: 4px;">
-                           <span class="badge-dot" style="background-color: var(--color-destructive);"></span> ${eq.status === 'Maintenance' ? 'In Maintenance' : eq.status === 'Retired' ? 'Retired' : 'Out of Stock'}
-                         </span>`
-                    }
-                  </div>
-                </div>
+                  return `
+                    <div class="premium-gear-card ${isAvailable ? '' : 'disabled'} ${isCurrentlyAssigned ? 'selected' : ''}" 
+                         data-eq-id="${eq.id}" 
+                         style="display: flex; gap: 14px; padding: 14px 16px; background: var(--color-surface-elevated, #18181b); border: 1px solid var(--color-border, rgba(255,255,255,0.08)); border-radius: 12px; cursor: ${isAvailable ? 'pointer' : 'not-allowed'}; opacity: ${isAvailable ? 1 : 0.55}; transition: all 0.2s ease-in-out; position: relative;"
+                         onclick="const cb = this.querySelector('input[type=checkbox]'); if (cb && !cb.disabled) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); this.classList.toggle('selected', cb.checked); }"
+                    >
+                      <div style="display: flex; align-items: center; height: 20px;">
+                        <input type="checkbox" class="manage-gear-checkbox" value="${eq.id}" ${isCurrentlyAssigned ? 'checked' : ''} 
+                               ${!isAvailable ? 'disabled' : ''} 
+                               style="width: 18px; height: 18px; cursor: ${isAvailable ? 'pointer' : 'not-allowed'}; accent-color: var(--color-accent, #3b82f6);"
+                               onclick="event.stopPropagation();"
+                               onchange="this.closest('.premium-gear-card').classList.toggle('selected', this.checked);"
+                        />
+                      </div>
+                      <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; width: 100%;">
+                          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <strong style="color: var(--color-foreground, #ffffff); font-size: 13.5px;">${eq.name}</strong>
+                            <span style="font-size: 10px; color: var(--color-foreground-muted, #a1a1aa); background: var(--color-surface, rgba(255,255,255,0.04)); padding: 2px 8px; border-radius: 99px; font-weight: 600; border: 1px solid rgba(255,255,255,0.04);">${eq.category}</span>
+                          </div>
+                          <div>
+                            ${isAvailable 
+                              ? `<span class="badge badge-success" style="font-size: 10.5px; font-weight: 600; padding: 3px 10px; border-radius: 99px; display: inline-flex; align-items: center; gap: 4px;">
+                                   <span class="badge-dot"></span> ${adjustedRemaining} of ${eq.quantity} Available
+                                 </span>`
+                              : `<span class="badge badge-destructive" style="font-size: 10.5px; font-weight: 600; padding: 3px 10px; border-radius: 99px; display: inline-flex; align-items: center; gap: 4px;">
+                                   <span class="badge-dot" style="background-color: var(--color-destructive);"></span> ${eq.status === 'Maintenance' ? 'In Maintenance' : eq.status === 'Retired' ? 'Retired' : 'Out of Stock / Fully Allocated'}
+                                 </span>`
+                            }
+                          </div>
+                        </div>
 
-                <div style="font-size: 11px; color: var(--color-foreground-muted, #a1a1aa); display: flex; flex-direction: column; gap: 4px; line-height: 1.4;">
-                  <div style="display: flex; gap: 16px; flex-wrap: wrap;">
-                    <span><strong>S/N:</strong> <span class="font-mono" style="color: var(--color-foreground-strong, #ffffff);">${eq.serialNumber}</span></span>
-                    <span><strong>Status:</strong> <span style="color: ${eq.status === 'Available' ? 'var(--color-success)' : 'var(--color-warning)'}">${eq.status}</span></span>
-                  </div>
-                  ${eq.bundledTools && eq.bundledTools.length > 0 
-                    ? `<div style="background: rgba(0,0,0,0.15); padding: 6px 10px; border-radius: 6px; border-left: 3px solid var(--color-border-strong, #3f3f46); margin-top: 4px;">
-                         <strong style="color: var(--color-foreground-strong, #ffffff);">Included Accessories:</strong> ${eq.bundledTools.join(', ')}
-                       </div>` 
-                    : ''
-                  }
-                  ${eq.additionalNotes 
-                    ? `<div style="font-style: italic; color: var(--color-foreground-subtle, #71717a); font-size: 11px;">"${eq.additionalNotes}"</div>` 
-                    : ''
-                  }
-                </div>
-              </div>
-            </div>
-          `;
-        })
-        .join('')
-    }
+                        <div style="font-size: 11px; color: var(--color-foreground-muted, #a1a1aa); display: flex; flex-direction: column; gap: 4px; line-height: 1.4;">
+                          <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
+                            <span><strong>S/N:</strong> <span class="font-mono" style="color: var(--color-foreground-strong, #ffffff);">${eq.serialNumber}</span></span>
+                            <span><strong>Status:</strong> <span style="color: ${eq.status === 'Available' ? 'var(--color-success)' : 'var(--color-warning)'}">${eq.status}</span></span>
+                          </div>
+                          
+                          <!-- QUANTITY SELECTOR PER PERSON -->
+                          <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,0.1);" onclick="event.stopPropagation();">
+                            <label style="font-size: 11px; font-weight: 600; color: var(--color-foreground);">Qty Alokasi untuk Crew Ini:</label>
+                            <input type="number" class="manage-gear-qty-input form-control" data-eq-id="${eq.id}" min="1" max="${adjustedRemaining}" value="${currentCrewQty || 1}" ${!isAvailable ? 'disabled' : ''} style="width: 70px; height: 26px; padding: 2px 6px; font-size: 11.5px; font-family: monospace;" />
+                            <span style="font-size: 10.5px; color: var(--color-foreground-subtle);">(Maks Tersedia: ${adjustedRemaining} Unit)</span>
+                          </div>
+
+                          ${eq.bundledTools && eq.bundledTools.length > 0 
+                            ? `<div style="background: rgba(0,0,0,0.15); padding: 6px 10px; border-radius: 6px; border-left: 3px solid var(--color-border-strong, #3f3f46); margin-top: 4px;">
+                                 <strong style="color: var(--color-foreground-strong, #ffffff);">Included Accessories:</strong> ${eq.bundledTools.join(', ')}
+                               </div>` 
+                            : ''
+                          }
+                          ${eq.additionalNotes 
+                            ? `<div style="font-style: italic; color: var(--color-foreground-subtle, #71717a); font-size: 11px;">"${eq.additionalNotes}"</div>` 
+                            : ''
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  `;
+                })
+                .join('')
+          }
         </div>
       </div>
     </div>
@@ -1255,7 +1318,14 @@ function openManageGearModal(
 
       const assignedEquipmentIds: string[] = [];
       checkboxes.forEach((cb) => {
-        if (cb.value) assignedEquipmentIds.push(cb.value);
+        if (cb.value) {
+          const card = cb.closest('.premium-gear-card');
+          const qtyInput = card?.querySelector('.manage-gear-qty-input') as HTMLInputElement;
+          const qty = Math.max(1, parseInt(qtyInput?.value || '1', 10));
+          for (let i = 0; i < qty; i++) {
+            assignedEquipmentIds.push(cb.value);
+          }
+        }
       });
 
       crewAssignment.role = role;

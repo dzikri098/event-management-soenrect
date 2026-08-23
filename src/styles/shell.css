@@ -432,6 +432,9 @@
   box-shadow: var(--shadow-lg);
   width: 100%;
   max-width: 540px;
+  max-height: calc(100dvh - var(--space-8));
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   transform: scale(0.96);
   transition: transform var(--duration-fast) var(--ease-standard);
@@ -447,10 +450,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0;
 }
 
 .dialog-body {
   padding: var(--space-5);
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .dialog-footer {
@@ -461,6 +468,7 @@
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 /* Page Title Bar */

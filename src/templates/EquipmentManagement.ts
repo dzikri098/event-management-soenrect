@@ -471,7 +471,7 @@ export async function renderEquipmentManagement(
         </div>
 
         <!-- MOBILE / TABLET CARD LIST VIEW -->
-        <div class="table-card-list" style="padding: var(--space-4);">
+        <div class="table-card-list">
           ${itemsInCat
             .map((item: EquipmentItem) => {
               const recentHistory: EquipmentUsageHistory | undefined = item.history[0];
@@ -490,50 +490,68 @@ export async function renderEquipmentManagement(
                 : ['Wireless Remote Control', 'Standard HDMI 10m Cable', 'AC Power Cable'];
 
               return `
-                <div class="table-card-item" style="padding: 14px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 10px;">
-                  <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
-                    <div style="display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1;">
-                      ${renderEquipmentImage(item)}
-                      <div style="min-width: 0;">
-                        <div style="font-weight: bold; color: var(--color-foreground); font-size: 14px; line-height: 1.35;">${item.name}</div>
-                        <div class="font-mono" style="font-size: 11px; color: var(--color-foreground-muted); margin-top: 2px;">
-                          SN: ${item.serialNumber} &bull; <strong style="color: var(--color-accent);">Qty: ${item.quantity || 1} Units</strong>
-                        </div>
+                <div class="eq-mobile-card">
+                  <!-- CARD HEADER -->
+                  <div class="eq-mobile-card-header">
+                    ${renderEquipmentImage(item)}
+                    <div style="min-width: 0; flex: 1;">
+                      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                        <span class="badge badge-neutral" style="font-size: 10px; padding: 2px 6px;">${item.category}</span>
+                        <span class="badge ${statusBadge}"><span class="badge-dot"></span>${item.status}</span>
+                      </div>
+                      <div style="font-weight: bold; color: var(--color-foreground); font-size: 14px; margin-top: 4px; line-height: 1.3;">
+                        ${item.name}
                       </div>
                     </div>
-                    <span class="badge ${statusBadge}"><span class="badge-dot"></span>${item.status}</span>
                   </div>
 
-                  <!-- BUNDLED TOOLS & ACCESSORIES IN CARD -->
-                  <div style="font-size: 11.5px; background: var(--color-surface-elevated); padding: 8px 10px; border-radius: var(--radius-sm); border: 1px solid var(--color-border);">
-                    <strong style="color: var(--color-accent);">Bundled Tools & Included Accessories:</strong>
-                    <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;">
-                      ${tools.map((t) => `<span class="badge badge-neutral font-mono" style="font-size: 10px; padding: 2px 6px;">+ ${t}</span>`).join('')}
+                  <!-- CARD BODY GRID -->
+                  <div class="eq-mobile-card-body">
+                    <div class="eq-mobile-card-field">
+                      <div class="eq-mobile-card-field-label">Stock Quantity</div>
+                      <div class="eq-mobile-card-field-value font-mono" style="color: var(--color-accent); font-weight: bold;">
+                        ${item.quantity || 1} Units
+                      </div>
+                    </div>
+
+                    <div class="eq-mobile-card-field">
+                      <div class="eq-mobile-card-field-label">Serial Number</div>
+                      <div class="eq-mobile-card-field-value font-mono">
+                        ${item.serialNumber}
+                      </div>
+                    </div>
+
+                    <div class="eq-mobile-card-field">
+                      <div class="eq-mobile-card-field-label">Responsible PIC</div>
+                      <div class="eq-mobile-card-field-value">
+                        ${recentHistory ? `${recentHistory.responsiblePerson}` : 'Unassigned'}
+                      </div>
+                    </div>
+
+                    <div class="eq-mobile-card-field">
+                      <div class="eq-mobile-card-field-label">Usage Dates</div>
+                      <div class="eq-mobile-card-field-value font-mono" style="font-size: 11px;">
+                        ${recentHistory ? `${recentHistory.startDate} &rarr; ${recentHistory.endDate}` : 'N/A'}
+                      </div>
+                    </div>
+
+                    <div class="eq-mobile-card-field-full">
+                      <div class="eq-mobile-card-field-label">Bundled Tools & Accessories</div>
+                      <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px;">
+                        ${tools.map((t) => `<span class="badge badge-neutral font-mono" style="font-size: 10px; padding: 2px 6px;">+ ${t}</span>`).join('')}
+                      </div>
+                    </div>
+
+                    <div class="eq-mobile-card-field-full">
+                      <div class="eq-mobile-card-field-label">Condition & Notes</div>
+                      <div class="eq-mobile-card-field-value" style="font-size: 11.5px; color: var(--color-foreground-muted);">
+                        ${notesText}
+                      </div>
                     </div>
                   </div>
 
-                  <div style="display: grid; grid-template-columns: 1fr; gap: 6px; font-size: 12px; margin-top: 2px;">
-                    <div>
-                      <span style="color: var(--color-foreground-subtle); font-weight: 500;">Responsible PIC:</span>
-                      <span style="color: var(--color-foreground); font-weight: 600;">${recentHistory ? `${recentHistory.responsiblePerson} (${recentHistory.responsibleRole})` : 'Unassigned'}</span>
-                    </div>
-
-                    ${
-                      recentHistory
-                        ? `<div>
-                            <span style="color: var(--color-foreground-subtle); font-weight: 500;">Usage Dates:</span>
-                            <span class="font-mono" style="color: var(--color-accent); font-weight: 600;">${recentHistory.startDate} &rarr; ${recentHistory.endDate}</span>
-                            <div style="font-size: 11px; color: var(--color-foreground-muted);">${recentHistory.projectName}</div>
-                          </div>`
-                        : ''
-                    }
-                  </div>
-
-                  <div style="font-size: 11.5px; color: var(--color-foreground-subtle); background: var(--color-surface-elevated); padding: 8px 10px; border-radius: var(--radius-sm); border: 1px solid var(--color-border);">
-                    <strong>Condition & Notes:</strong> ${notesText}
-                  </div>
-
-                  <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 6px;">
+                  <!-- CARD ACTIONS FOOTER -->
+                  <div class="eq-mobile-card-actions">
                     <button class="btn btn-tertiary btn-sm edit-equipment-btn" data-id="${item.id}">
                       Edit Asset
                     </button>
