@@ -107,7 +107,7 @@ export async function renderProjectManagement(
                           .map(
                             (c: ProjectCrewAssignment) => `
                           <div class="avatar-mini" style="width: 28px; height: 28px; min-width: 28px; font-size: 11px; font-weight: bold; margin-left: -6px; border: 2px solid var(--color-surface); background-color: var(--color-accent); color: #FFFFFF;" title="${c.name} (${c.role})">
-                            ${c.name.split(' ').map((n) => n[0]).join('')}
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                           </div>
                         `
                           )
@@ -168,45 +168,88 @@ export async function renderProjectManagement(
           const picPhone = proj.picPhone || (proj.crewList[0] ? proj.crewList[0].phone : '');
 
           return `
-            <div class="table-card-item clickable-project-row" data-id="${proj.id}" style="cursor: pointer; padding: 14px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md);">
-              <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px;">
-                <div style="font-size: 11px; color: var(--color-accent); font-weight: 600;">Client: ${proj.clientName}</div>
+            <div class="table-card-item clickable-project-row" data-id="${proj.id}" style="cursor: pointer; padding: 16px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 12px; transition: all var(--duration-fast) var(--ease-standard);">
+              
+              <!-- CARD TOP HEADER: CLIENT & CREW COUNT BADGES -->
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                <span class="badge badge-orange" style="font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: var(--radius-full);">
+                  Client: ${proj.clientName}
+                </span>
+                <span style="font-size: 11px; font-weight: 600; color: var(--color-foreground-subtle); display: inline-flex; align-items: center; gap: 5px; background: var(--color-surface); padding: 3px 10px; border-radius: var(--radius-full); border: 1px solid var(--color-border);">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                  ${proj.crewList.length} Assigned Crew
+                </span>
               </div>
 
-              <h4 style="font-size: 15px; font-weight: bold; color: var(--color-foreground); margin: 0 0 8px 0; word-break: break-word;">${proj.projectName}</h4>
+              <!-- PROJECT TITLE -->
+              <h4 style="font-size: 16px; font-weight: 700; color: var(--color-foreground); margin: 0; line-height: 1.35; word-break: break-word;">
+                ${proj.projectName}
+              </h4>
 
-              <div style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--color-foreground-muted); margin-bottom: 10px; word-break: break-word;">
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-foreground-subtle); flex-shrink: 0;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                  <span>PIC: <strong style="color: var(--color-foreground);">${picName}</strong> ${picPhone ? `(${picPhone})` : ''}</span>
+              <!-- INFORMATION ROWS LIST -->
+              <div style="display: flex; flex-direction: column; gap: 10px; font-size: 12.5px; color: var(--color-foreground-muted);">
+                
+                <!-- ROW 1: PIC -->
+                <div style="display: flex; align-items: flex-start; gap: 10px;">
+                  <div style="width: 26px; height: 26px; min-width: 26px; border-radius: var(--radius-md); background: rgba(255, 255, 255, 0.05); border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; color: var(--color-foreground-subtle);">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  </div>
+                  <div style="flex: 1; min-width: 0; padding-top: 2px;">
+                    <span style="color: var(--color-foreground-subtle);">PIC:</span> 
+                    <strong style="color: var(--color-foreground); font-weight: 600;">${picName}</strong>
+                    ${picPhone ? `<span class="font-mono" style="font-size: 11px; color: var(--color-foreground-subtle); margin-left: 4px;">(${picPhone})</span>` : ''}
+                  </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-accent); flex-shrink: 0;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                  <span>Date: <strong style="color: var(--color-foreground);">${proj.eventDate} (${proj.startTime} - ${proj.endTime})</strong></span>
+
+                <!-- ROW 2: EVENT DATE & TIME -->
+                <div style="display: flex; align-items: flex-start; gap: 10px;">
+                  <div style="width: 26px; height: 26px; min-width: 26px; border-radius: var(--radius-md); background: rgba(255, 85, 0, 0.1); border: 1px solid rgba(255, 85, 0, 0.25); display: flex; align-items: center; justify-content: center; color: var(--color-accent);">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                  </div>
+                  <div style="flex: 1; min-width: 0; padding-top: 2px;">
+                    <span style="color: var(--color-foreground-subtle);">Date:</span> 
+                    <strong class="font-mono" style="color: var(--color-foreground); font-weight: 600;">${proj.eventDate}</strong>
+                    <div style="font-size: 11px; color: var(--color-accent); font-weight: 500; margin-top: 2px;">${proj.startTime} &ndash; ${proj.endTime} WIB</div>
+                  </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #f97316; flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                  <span>Venue: <strong style="color: var(--color-foreground);">${proj.venueName}</strong> (${proj.venueAddress})</span>
-                  ${
-                    proj.eventLinkMaps
-                      ? `<a href="${proj.eventLinkMaps}" target="_blank" rel="noopener" onclick="event.stopPropagation();" class="btn-maps-link" title="Open Google Maps Location">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                          <span>Google Maps</span>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.75;"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
-                        </a>`
-                      : ''
-                  }
+
+                <!-- ROW 3: VENUE & GOOGLE MAPS LINK -->
+                <div style="display: flex; align-items: flex-start; gap: 10px;">
+                  <div style="width: 26px; height: 26px; min-width: 26px; border-radius: var(--radius-md); background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.25); display: flex; align-items: center; justify-content: center; color: #f97316; margin-top: 2px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                  </div>
+                  <div style="flex: 1; min-width: 0;">
+                    <div style="font-weight: 600; color: var(--color-foreground); font-size: 13px;">${proj.venueName}</div>
+                    <div style="font-size: 11px; color: var(--color-foreground-subtle); line-height: 1.4; margin-top: 2px; word-break: break-word;">${proj.venueAddress}</div>
+                    ${
+                      proj.eventLinkMaps
+                        ? `<div style="margin-top: 8px;">
+                            <a href="${proj.eventLinkMaps}" target="_blank" rel="noopener" onclick="event.stopPropagation();" class="btn-maps-link" title="Open Google Maps Location">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                              <span>Google Maps</span>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.75;"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+                            </a>
+                          </div>`
+                        : ''
+                    }
+                  </div>
                 </div>
+
               </div>
 
-              <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 8px; border-top: 1px solid var(--color-border); gap: 8px; flex-wrap: wrap;">
-                <div style="font-size: 11px; color: var(--color-foreground-subtle);">${proj.crewList.length} Assigned Crew</div>
-                <div class="btn-group" style="margin-left: auto;">
-                  <button class="btn btn-tertiary btn-sm edit-proj-data-btn" data-id="${proj.id}">Edit</button>
-                  <button class="btn btn-secondary btn-sm open-proj-detail-btn" data-id="${proj.id}">View Details &rarr;</button>
-                  <button class="btn btn-destructive btn-sm delete-proj-data-btn" data-id="${proj.id}">Delete</button>
-                </div>
+              <!-- ACTION BUTTONS FOOTER -->
+              <div style="display: flex; align-items: center; gap: 8px; padding-top: 10px; border-top: 1px solid var(--color-border); margin-top: 4px;">
+                <button class="btn btn-secondary btn-sm open-proj-detail-btn" data-id="${proj.id}" style="flex: 1; justify-content: center; font-weight: 600;">
+                  View Details &rarr;
+                </button>
+                <button class="btn btn-tertiary btn-sm edit-proj-data-btn" data-id="${proj.id}" title="Edit Project Details" style="padding: 6px 12px;">
+                  Edit
+                </button>
+                <button class="btn btn-destructive btn-sm delete-proj-data-btn" data-id="${proj.id}" title="Delete Project" style="padding: 6px 10px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
               </div>
+
             </div>
           `;
         })

@@ -87,7 +87,7 @@ export function renderDataTable(options: DataTableOptions): void {
                 </td>
                 <td>
                   <div style="display: flex; align-items: center; gap: 10px;">
-                    <div class="avatar">${row.name.substring(0, 2).toUpperCase()}</div>
+                    <div class="avatar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>
                     <div>
                       <div style="font-weight: var(--font-weight-medium); color: var(--color-foreground);">${row.name}</div>
                       <div style="font-size: var(--text-xs); color: var(--color-foreground-muted);">${row.email}</div>
@@ -129,7 +129,7 @@ export function renderDataTable(options: DataTableOptions): void {
         <div class="table-card-item">
           <div style="display: flex; align-items: center; justify-content: space-between;">
             <div style="display: flex; align-items: center; gap: 10px;">
-              <div class="avatar">${row.name.substring(0, 2).toUpperCase()}</div>
+              <div class="avatar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="12" r="4"></circle></svg></div>
               <div>
                 <div style="font-weight: var(--font-weight-medium);">${row.name}</div>
                 <div style="font-size: var(--text-xs); color: var(--color-foreground-muted);">${row.email}</div>

@@ -62,12 +62,6 @@ export async function renderProjectCrewDetail(
         <div class="page-title-description" style="margin-top: 4px;">Detailed Event Management, Crew Equipment Assignments, & Content Production Assets</div>
       </div>
     </div>
-    <div class="btn-group">
-      <button class="btn btn-secondary btn-sm" id="btn-export-manifest">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-        Download Manifest
-      </button>
-    </div>
   `;
   container.appendChild(titleBar);
 
@@ -131,12 +125,14 @@ export async function renderProjectCrewDetail(
   const renderSubtabsNav = () => {
     navTabsContainer.innerHTML = `
       <button class="btn ${activeSubtab === 'content-production' ? 'btn-primary' : 'btn-tertiary'} btn-sm subtab-trigger" data-tab="content-production">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
-        Content Production Assets
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0;"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+        <span class="desktop-tab-label">Content Production Assets (${contentProds.length})</span>
+        <span class="mobile-tab-label">Media Assets (${contentProds.length})</span>
       </button>
       <button class="btn ${activeSubtab === 'crew-gear' ? 'btn-primary' : 'btn-tertiary'} btn-sm subtab-trigger" data-tab="crew-gear">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
-        Crew Equipment Allocation per Person
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+        <span class="desktop-tab-label">Crew Equipment Allocation (${currentProject.crewList.length})</span>
+        <span class="mobile-tab-label">Crew Gear (${currentProject.crewList.length})</span>
       </button>
     `;
 
@@ -292,6 +288,64 @@ export async function renderProjectCrewDetail(
             </tbody>
           </table>
         </div>
+
+        <!-- MOBILE CONTENT PRODUCTION ASSETS LIST VIEW -->
+        <div class="table-card-list">
+          ${contentProds.length === 0 
+            ? `<div style="text-align: center; padding: 24px; color: var(--color-foreground-muted); background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md);">
+                No media assets uploaded yet. Click "+ Add Media Asset" above to add production assets.
+               </div>`
+            : contentProds.map((cp: ContentProductionItem) => {
+                const cpBadge = cp.status === 'Approved' || cp.status === 'Implemented' ? 'badge-success' : cp.status === 'Revision' ? 'badge-warning' : cp.status === 'In Rendering' ? 'badge-orange' : 'badge-warning';
+                const statusLabel = cp.status === 'Revision' ? 'Revision Pending' : cp.status;
+                const revCount = cp.revisions ? cp.revisions.length : 1;
+                const initialNotes = cp.revisions && cp.revisions.length > 0 ? cp.revisions[cp.revisions.length - 1].notes : 'No instructions provided.';
+                const latestNotes = cp.revisions && cp.revisions.length > 1 ? cp.revisions[0].notes : null;
+
+                return `
+                  <div class="table-card-item" style="padding: 16px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 12px;">
+                    
+                    <!-- TOP HEADER BADGES: STATUS & TYPE -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                      <span class="badge ${cpBadge}"><span class="badge-dot"></span>${statusLabel}</span>
+                      <span class="badge badge-neutral" style="font-size: 11px;">${cp.type}</span>
+                    </div>
+
+                    <!-- TITLE & RESOLUTION -->
+                    <div>
+                      <h4 style="font-size: 15px; font-weight: 700; color: var(--color-foreground); margin: 0 0 4px 0; line-height: 1.35; word-break: break-word;">
+                        ${cp.title}
+                      </h4>
+                      <div class="font-mono" style="font-size: 11px; color: var(--color-foreground-muted);">
+                        Resolution: ${cp.resolution} &bull; Editor: <strong style="color: var(--color-foreground);">${cp.editorName}</strong>
+                      </div>
+                    </div>
+
+                    <!-- INSTRUCTIONS & NOTES -->
+                    <div style="background: var(--color-surface); padding: 10px 12px; border-radius: var(--radius-md); border: 1px solid var(--color-border); font-size: 11.5px; color: var(--color-foreground-muted); display: flex; flex-direction: column; gap: 6px;">
+                      <div>
+                        <span style="color: var(--color-accent); font-weight: 600;">Initial Instructions:</span> "${initialNotes}"
+                      </div>
+                      ${latestNotes ? `<div><span style="color: var(--color-warning); font-weight: 600;">Latest Notes:</span> "${latestNotes}"</div>` : ''}
+                      ${cp.qmgSignedOff ? `<div style="color: var(--color-success); font-weight: 600; margin-top: 2px;">&check; QMG Signed off by ${cp.qmgSignerName || 'Director'} (${cp.qmgSignDate || 'Recent'})</div>` : ''}
+                    </div>
+
+                    <!-- ACTION BUTTONS FOOTER -->
+                    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-top: 8px; border-top: 1px solid var(--color-border);">
+                      ${cp.fileUrl ? `<a href="${cp.fileUrl}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="flex: 1; justify-content: center; min-width: 110px;">🔗 Open File ↗</a>` : ''}
+                      <button class="btn btn-secondary btn-sm edit-media-asset-btn" data-cp-id="${cp.id}">Edit</button>
+                      <button class="btn btn-secondary btn-sm add-revision-btn" data-cp-id="${cp.id}">Add Rev</button>
+                      <button class="btn btn-tertiary btn-sm view-revisions-btn" data-cp-id="${cp.id}">Revisions (${revCount}) &rarr;</button>
+                      <button class="btn btn-destructive btn-sm delete-media-btn" data-cp-id="${cp.id}" title="Delete Media Asset" style="margin-left: auto;">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                      </button>
+                    </div>
+
+                  </div>
+                `;
+              }).join('')
+          }
+        </div>
       `;
 
       subtabContentRoot.appendChild(contentCard);
@@ -420,7 +474,7 @@ export async function renderProjectCrewDetail(
                             <td>
                               <div style="display: flex; align-items: center; gap: 12px;">
                                 <div class="avatar-mini" style="width: 32px; height: 32px; min-width: 32px; font-weight: bold; background: var(--color-accent); color: #FFFFFF;">
-                                  ${crew.name.split(' ').map((n) => n[0]).join('')}
+                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                                 </div>
                                 <div>
                                   <div style="font-weight: 600; color: var(--color-foreground);">${crew.name}</div>
@@ -468,6 +522,70 @@ export async function renderProjectCrewDetail(
         }
             </tbody>
           </table>
+        </div>
+
+        <!-- MOBILE CREW GEAR ALLOCATION LIST VIEW -->
+        <div class="table-card-list">
+          ${currentProject.crewList.length === 0
+            ? `<div style="text-align: center; padding: 24px; color: var(--color-foreground-muted); background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md);">
+                No crew members assigned to this project yet. Click "+ Assign Crew & Gear" above to allocate gear.
+               </div>`
+            : currentProject.crewList.map((crew: ProjectCrewAssignment) => {
+                return `
+                  <div class="table-card-item" style="padding: 16px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 12px;">
+                    
+                    <!-- CREW MEMBER INFO HEADER -->
+                    <div style="display: flex; align-items: flex-start; gap: 12px;">
+                      <div class="avatar-mini" style="width: 38px; height: 38px; min-width: 38px; flex-shrink: 0; font-weight: bold; background: var(--color-accent); color: #FFFFFF; font-size: 13px; margin-top: 2px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                      </div>
+                      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                          <div style="font-weight: 700; color: var(--color-foreground); font-size: 14.5px; word-break: break-word;">${crew.name}</div>
+                          <span class="badge badge-neutral" style="font-size: 11px; max-width: 100%; white-space: normal; line-height: 1.3;">${crew.role}</span>
+                        </div>
+                        <div class="font-mono" style="font-size: 11px; color: var(--color-foreground-subtle);">${crew.phone || 'No Phone'}</div>
+                      </div>
+                    </div>
+
+                    <!-- ALLOCATED GEAR SECTION -->
+                    <div style="background: var(--color-surface); padding: 10px 12px; border-radius: var(--radius-md); border: 1px solid var(--color-border);">
+                      <div style="font-size: 11px; font-weight: 600; color: var(--color-foreground-subtle); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
+                        Assigned Gear (${crew.assignedEquipmentIds.length})
+                      </div>
+                      <div style="display: flex; flex-direction: column; gap: 6px;">
+                        ${crew.assignedEquipmentIds.length === 0
+                          ? `<span style="font-size: 11.5px; color: var(--color-foreground-subtle);">No gear allocated</span>`
+                          : crew.assignedEquipmentIds.map((eqId: string) => {
+                              const eq = getEquipmentInfo(eqId);
+                              return `
+                                <div style="display: flex; align-items: center; gap: 8px; padding: 5px 8px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-sm);">
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-accent); flex-shrink: 0;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                  <span style="font-size: 11.5px; color: var(--color-accent); font-weight: 600;">
+                                    ${eq ? eq.name : eqId}
+                                  </span>
+                                  ${eq ? `<span class="font-mono" style="font-size: 10px; color: var(--color-foreground-muted); margin-left: auto;">${eq.serialNumber}</span>` : ''}
+                                </div>
+                              `;
+                            }).join('')
+                        }
+                      </div>
+                    </div>
+
+                    <!-- ACTION BUTTONS FOOTER -->
+                    <div style="display: flex; align-items: center; gap: 8px; padding-top: 8px; border-top: 1px solid var(--color-border);">
+                      <button class="btn btn-secondary btn-sm edit-crew-assignment-btn" data-crew-id="${crew.crewId}" style="flex: 1; justify-content: center; font-weight: 600;">
+                        Edit Gear Allocation
+                      </button>
+                      <button class="btn btn-destructive btn-sm remove-crew-btn" data-crew-id="${crew.crewId}" title="Remove Crew from Project" style="padding: 6px 10px;">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                      </button>
+                    </div>
+
+                  </div>
+                `;
+              }).join('')
+          }
         </div>
       `;
       subtabContentRoot.appendChild(crewCard);

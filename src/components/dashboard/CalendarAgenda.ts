@@ -94,7 +94,7 @@ export function renderCalendarAgenda(container: HTMLElement, agendas: AgendaItem
                       <div class="attendee-avatars">
                         ${item.attendees
                           .slice(0, 3)
-                          .map((att) => `<div class="avatar-mini" title="${att.name} (${att.role})">${att.avatarInitials}</div>`)
+                          .map((att) => `<div class="avatar-mini" title="${att.name} (${att.role})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>`)
                           .join('')}
                         ${item.attendees.length > 3 ? `<div class="avatar-mini count">+${item.attendees.length - 3}</div>` : ''}
                       </div>
@@ -292,7 +292,7 @@ function openAgendaDetailModal(agenda: AgendaItem): void {
             .map(
               (att) => `
             <div style="display: flex; align-items: center; gap: 12px; padding: 6px 10px; border-radius: var(--radius-md); background: var(--color-bg); border: 1px solid var(--color-border);">
-              <div class="avatar-mini" style="width: 28px; height: 28px; min-width: 28px; font-size: 11px;">${att.avatarInitials}</div>
+              <div class="avatar-mini" style="width: 28px; height: 28px; min-width: 28px; font-size: 11px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>
               <div>
                 <div style="font-size: var(--text-sm); font-weight: 600; color: var(--color-foreground);">${att.name}</div>
                 <div style="font-size: 11px; color: var(--color-foreground-subtle);">${att.role}</div>

@@ -7,12 +7,17 @@
 import { ApplicationViewState } from '../types/ui';
 import { CategoryStoreService, MasterCategoryGroup } from '../services/categoryStore';
 import { renderBreadcrumbs } from '../components/navigation/Breadcrumbs';
+import { isSupabaseConfigured } from '../services/supabaseClient';
 
 export async function renderCategorySettings(
   container: HTMLElement,
   viewState: ApplicationViewState
 ): Promise<void> {
   container.className = 'template-executive-overview';
+
+  const dbStatusBadge = isSupabaseConfigured()
+    ? `<span class="badge badge-success" style="font-size: 11.5px; padding: 4px 10px;" title="Connected to Supabase PostgreSQL Database"><span class="badge-dot"></span>Supabase DB Connected</span>`
+    : `<span class="badge badge-neutral" style="font-size: 11.5px; padding: 4px 10px;" title="Local Cache Storage Mode"><span class="badge-dot"></span>Local Cache Mode</span>`;
 
   // Render Page Title Bar
   const titleBar = document.createElement('div');
@@ -23,11 +28,12 @@ export async function renderCategorySettings(
         { label: 'Workspace', path: '/executive-overview' },
         { label: 'Category Settings & Form Control' }
       ])}
-      <h1>
+      <h1 style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
         Category Settings & Form Control
         <span class="badge badge-orange"><span class="badge-dot"></span>Dropdown Control</span>
+        ${dbStatusBadge}
       </h1>
-      <div class="page-title-description">Manage dropdown categories for input forms across Equipment, Content Assets, Crew Roles, SOPs, and Timelines.</div>
+      <div class="page-title-description">Manage dropdown categories for input forms across Equipment, Content Assets, Crew Roles, SOPs, and Timelines in real-time.</div>
     </div>
     <div class="btn-group">
       <button class="btn btn-tertiary btn-sm" id="btn-reset-categories">
@@ -41,6 +47,9 @@ export async function renderCategorySettings(
   if (viewState === 'loading') {
     return;
   }
+
+  // Sync latest category data from Supabase before rendering UI cards
+  await CategoryStoreService.fetchFromSupabase();
 
   const renderCategoryCards = () => {
     // Remove existing container if re-rendering
@@ -105,40 +114,47 @@ export async function renderCategorySettings(
 
     // Attach Handlers
     grid.querySelectorAll('.remove-cat-item-btn').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         const modKey = (e.currentTarget as HTMLElement).getAttribute('data-module') as any;
         const itemVal = (e.currentTarget as HTMLElement).getAttribute('data-item');
         if (modKey && itemVal) {
-          CategoryStoreService.removeCategory(modKey, itemVal);
+          btn.setAttribute('disabled', 'true');
+          await CategoryStoreService.removeCategory(modKey, itemVal);
           renderCategoryCards();
         }
       });
     });
 
     grid.querySelectorAll('.add-cat-btn').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         const modKey = (e.currentTarget as HTMLElement).getAttribute('data-module') as any;
         const inputEl = grid.querySelector(`.add-cat-input[data-module="${modKey}"]`) as HTMLInputElement;
         if (modKey && inputEl && inputEl.value.trim()) {
-          const added = CategoryStoreService.addCategory(modKey, inputEl.value.trim());
+          (btn as HTMLButtonElement).disabled = true;
+          const added = await CategoryStoreService.addCategory(modKey, inputEl.value.trim());
           if (added) {
             inputEl.value = '';
             renderCategoryCards();
+          } else {
+            (btn as HTMLButtonElement).disabled = false;
           }
         }
       });
     });
 
     grid.querySelectorAll('.add-cat-input').forEach((input) => {
-      input.addEventListener('keydown', (e) => {
+      input.addEventListener('keydown', async (e) => {
         if ((e as KeyboardEvent).key === 'Enter') {
           const modKey = (input as HTMLElement).getAttribute('data-module') as any;
           const inputEl = input as HTMLInputElement;
           if (modKey && inputEl && inputEl.value.trim()) {
-            const added = CategoryStoreService.addCategory(modKey, inputEl.value.trim());
+            inputEl.disabled = true;
+            const added = await CategoryStoreService.addCategory(modKey, inputEl.value.trim());
             if (added) {
               inputEl.value = '';
               renderCategoryCards();
+            } else {
+              inputEl.disabled = false;
             }
           }
         }
@@ -149,9 +165,9 @@ export async function renderCategorySettings(
   renderCategoryCards();
 
   // Reset to Defaults Handler
-  titleBar.querySelector('#btn-reset-categories')?.addEventListener('click', () => {
-    if (confirm('Are you sure you want to reset all categories to default settings?')) {
-      CategoryStoreService.resetDefaults();
+  titleBar.querySelector('#btn-reset-categories')?.addEventListener('click', async () => {
+    if (confirm('Are you sure you want to reset all categories to default settings in Supabase?')) {
+      await CategoryStoreService.resetDefaults();
       renderCategoryCards();
     }
   });

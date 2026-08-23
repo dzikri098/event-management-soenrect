@@ -928,6 +928,44 @@
 }
 
 /* --- PROJECT DETAIL MOBILE RESPONSIVE --- */
+.project-subtabs-nav {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .project-subtabs-nav {
+    display: flex;
+    align-items: center;
+    width: auto;
+  }
+}
+
+.project-subtabs-nav .subtab-trigger {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+  padding: 8px 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+
+.mobile-tab-label { display: none; }
+.desktop-tab-label { display: inline; }
+
+@media (max-width: 640px) {
+  .mobile-tab-label { display: inline; }
+  .desktop-tab-label { display: none; }
+}
+
 .project-logistics-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

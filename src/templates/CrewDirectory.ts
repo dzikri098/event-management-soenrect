@@ -96,7 +96,7 @@ export async function renderCrewDirectory(
                   <td>
                     <div style="display: flex; align-items: center; gap: 12px;">
                       <div class="avatar-mini" style="width: 34px; height: 34px; min-width: 34px; font-size: 13px; font-weight: bold; background-color: var(--color-accent); color: #FFFFFF;">
-                        ${crew.avatarInitials}
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                       </div>
                       <div>
                         <div style="font-weight: 600; color: var(--color-foreground);">${crew.name}</div>
@@ -149,41 +149,67 @@ export async function renderCrewDirectory(
               ? 'badge-success'
               : 'badge-neutral';
 
+          const addressText = crew.address && crew.address !== '-' ? crew.address : '';
+
           return `
-            <div class="table-card-item clickable-crew-row" data-crew-id="${crew.id}" style="cursor: pointer; padding: 14px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md);">
-              <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px;">
-                <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
-                  <div class="avatar-mini" style="width: 36px; height: 36px; min-width: 36px; font-size: 13px; font-weight: bold; background-color: var(--color-accent); color: #FFFFFF;">
-                    ${crew.avatarInitials}
+            <div class="table-card-item clickable-crew-row" data-crew-id="${crew.id}" style="cursor: pointer; padding: 16px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 12px;">
+              
+              <!-- TOP ROW: AVATAR + NAME/EMAIL + STATUS BADGE -->
+              <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+                  <div class="avatar-mini" style="width: 40px; height: 40px; min-width: 40px; flex-shrink: 0; background-color: var(--color-accent); color: #FFFFFF; border-radius: 50%;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                   </div>
-                  <div style="min-width: 0;">
-                    <div style="font-weight: 600; color: var(--color-foreground); font-size: 14px;">${crew.name}</div>
-                    <div style="font-size: 11px; color: var(--color-foreground-subtle);">${crew.email}</div>
+                  <div style="flex: 1; min-width: 0;">
+                    <div style="font-weight: 700; color: var(--color-foreground); font-size: 15px; line-height: 1.25; word-break: break-word;">${crew.name}</div>
+                    <div style="font-size: 11.5px; color: var(--color-foreground-subtle); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px;">${crew.email}</div>
                   </div>
                 </div>
-                <span class="badge ${statusBadge}"><span class="badge-dot"></span>${crew.status}</span>
+                <span class="badge ${statusBadge}" style="flex-shrink: 0; font-size: 11px; margin-top: 2px;"><span class="badge-dot"></span>${crew.status}</span>
               </div>
 
-              <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; font-size: 11px;">
-                <span class="badge badge-neutral">${crew.role}</span>
-                <span class="badge badge-orange font-mono">PIN: ${crew.passcode || 'crew1234'}</span>
-                <span style="color: var(--color-foreground-muted); display: inline-flex; align-items: center; gap: 4px; margin-top: 2px;">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                  ${crew.phone}
-                </span>
+              <!-- MIDDLE PANEL: ROLE, PIN, PHONE, ADDRESS -->
+              <div style="display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; background: var(--color-surface); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-md);">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                  <span class="badge badge-neutral" style="font-size: 11.5px; font-weight: 600;">${crew.role}</span>
+                  <span class="badge badge-orange font-mono" style="font-weight: 700; font-size: 11px; letter-spacing: 0.03em;">
+                    PIN: ${crew.passcode || 'crew1234'}
+                  </span>
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 11.5px; color: var(--color-foreground-muted); margin-top: 2px;">
+                  <div style="display: flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-weight: 500;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                    ${crew.phone}
+                  </div>
+
+                  ${
+                    addressText
+                      ? `
+                    <div style="display: flex; align-items: center; gap: 4px; color: var(--color-foreground-subtle); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                      ${addressText}
+                    </div>
+                  `
+                      : ''
+                  }
+                </div>
               </div>
 
-              <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 8px; border-top: 1px solid var(--color-border); gap: 8px; flex-wrap: wrap;">
-                <div style="font-size: 11px; color: var(--color-foreground-muted); max-width: 100%; word-break: break-word; display: inline-flex; align-items: center; gap: 4px;">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                  ${crew.address}
-                </div>
-                <div class="btn-group" style="margin-left: auto;">
-                  <button class="btn btn-tertiary btn-sm edit-crew-btn" data-crew-id="${crew.id}">Edit</button>
-                  <button class="btn btn-secondary btn-sm view-crew-btn" data-crew-id="${crew.id}">View &rarr;</button>
-                  <button class="btn btn-destructive btn-sm delete-crew-btn" data-crew-id="${crew.id}">Delete</button>
-                </div>
+              <!-- ACTIONS FOOTER -->
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 2px; padding-top: 10px; border-top: 1px solid var(--color-border);">
+                <button type="button" class="btn btn-secondary btn-sm edit-crew-btn" data-crew-id="${crew.id}" style="font-size: 12px; padding: 6px 12px; display: inline-flex; align-items: center; gap: 4px;" title="Edit Crew Details">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                  Edit
+                </button>
+                <button type="button" class="btn btn-primary btn-sm view-crew-btn" data-crew-id="${crew.id}" style="flex: 1; justify-content: center; font-size: 12px; padding: 6px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                  View Profile &rarr;
+                </button>
+                <button type="button" class="btn btn-destructive btn-sm delete-crew-btn" data-crew-id="${crew.id}" style="font-size: 12px; padding: 6px 10px; display: inline-flex; align-items: center; justify-content: center;" title="Delete Crew Member">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
               </div>
+
             </div>
           `;
         })
@@ -197,7 +223,7 @@ export async function renderCrewDirectory(
   tableCard.querySelectorAll('.clickable-crew-row').forEach((row) => {
     row.addEventListener('click', (e) => {
       // Avoid triggering when clicking action buttons directly
-      if ((e.target as HTMLElement).closest('.btn-group') || (e.target as HTMLElement).tagName === 'BUTTON') {
+      if ((e.target as HTMLElement).closest('.btn-group') || (e.target as HTMLElement).closest('button') || (e.target as HTMLElement).tagName === 'BUTTON') {
         return;
       }
       const cId = (row as HTMLElement).getAttribute('data-crew-id') || undefined;

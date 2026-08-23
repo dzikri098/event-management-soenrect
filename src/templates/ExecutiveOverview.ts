@@ -235,6 +235,31 @@ export async function renderExecutiveOverview(
         </tbody>
       </table>
     </div>
+
+    <!-- MOBILE ACTIVE PROJECTS CARD LIST VIEW -->
+    <div class="table-card-list">
+      ${projects.map((proj: ProjectRecord) => {
+        const statusBadge = proj.status === 'Live Show' ? 'badge-orange' : proj.status === 'In Production' ? 'badge-success' : 'badge-neutral';
+        return `
+          <div class="table-card-item clickable-project-row" data-id="${proj.id}" style="cursor: pointer; padding: 14px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+              <span class="badge ${statusBadge}"><span class="badge-dot"></span>${proj.status}</span>
+              <span style="font-size: 11px; color: var(--color-accent); font-weight: 600;">Client: ${proj.clientName}</span>
+            </div>
+            <h4 style="font-size: 15px; font-weight: 700; color: var(--color-foreground); margin: 0; word-break: break-word;">${proj.projectName}</h4>
+            <div style="font-size: 12px; color: var(--color-foreground-muted); display: flex; flex-direction: column; gap: 4px;">
+              <div>PIC: <strong style="color: var(--color-foreground);">${proj.picName || 'Devon Takahashi'}</strong></div>
+              <div>Date & Venue: <strong class="font-mono" style="color: var(--color-foreground);">${proj.eventDate}</strong> (${proj.venueName})</div>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: flex-end; padding-top: 6px; border-top: 1px solid var(--color-border);">
+              <a href="/project-crew-detail?id=${proj.id}" data-route-link="/project-crew-detail?id=${proj.id}" class="btn btn-secondary btn-sm">
+                Details &rarr;
+              </a>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
   `;
   leftCol.appendChild(projectsCard);
 
@@ -292,7 +317,7 @@ export async function renderExecutiveOverview(
                   <td>
                     <div style="display: flex; align-items: center; gap: 10px;">
                       <div class="avatar-mini" style="width: 28px; height: 28px; font-size: 11px; font-weight: bold; background: var(--color-accent); color: #FFFFFF;">
-                        ${crew.avatarInitials}
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                       </div>
                       <div>
                         <div style="font-weight: 600; color: var(--color-foreground);">${crew.name}</div>
@@ -314,6 +339,32 @@ export async function renderExecutiveOverview(
             .join('')}
         </tbody>
       </table>
+    </div>
+
+    <!-- MOBILE CREW ROSTER CARD LIST VIEW -->
+    <div class="table-card-list">
+      ${crewMembers.map((crew: CrewMember) => {
+        const statusBadge = crew.status === 'On Assignment' ? 'badge-orange' : crew.status === 'Available' ? 'badge-success' : 'badge-neutral';
+        return `
+          <div class="table-card-item clickable-crew-row" data-id="${crew.id}" style="cursor: pointer; padding: 14px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+              <div class="avatar-mini" style="width: 32px; height: 32px; min-width: 32px; flex-shrink: 0; font-size: 11px; font-weight: bold; background: var(--color-accent); color: #FFFFFF;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              </div>
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: 700; color: var(--color-foreground); font-size: 13.5px; word-break: break-word;">${crew.name}</div>
+                <div style="font-size: 11px; color: var(--color-foreground-subtle); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${crew.role} &bull; ${crew.phone || ''}</div>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="badge ${statusBadge}"><span class="badge-dot"></span>${crew.status}</span>
+              <a href="/crew-detail?id=${crew.id}" data-route-link="/crew-detail?id=${crew.id}" class="btn btn-tertiary btn-sm" style="padding: 4px 8px;">
+                Profile &rarr;
+              </a>
+            </div>
+          </div>
+        `;
+      }).join('')}
     </div>
   `;
   leftCol.appendChild(crewCard);

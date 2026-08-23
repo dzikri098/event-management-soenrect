@@ -74,22 +74,23 @@ export class CategoryStoreService {
   ];
 
   public static async initialize(): Promise<void> {
-    // Always seed localStorage with defaults first as immediate fallback
     if (!localStorage.getItem(this.STORAGE_KEY)) {
       this.saveCategoryGroups(this.defaultCategoryGroups);
     }
+    await this.fetchFromSupabase();
+  }
 
+  public static async fetchFromSupabase(): Promise<MasterCategoryGroup[]> {
     if (isSupabaseConfigured() && supabase) {
       try {
         const { data, error } = await supabase.from('category_settings').select('*');
 
         if (error) {
           console.warn('Supabase category fetch error, using local data:', error.message);
-          return;
+          return this.getCategoryGroups();
         }
 
         if (data && data.length > 0) {
-          // Supabase has data — sync to localStorage for offline use
           const groups: MasterCategoryGroup[] = data.map((row: any) => ({
             id: row.id,
             name: row.name,
@@ -99,43 +100,43 @@ export class CategoryStoreService {
           }));
           this.saveCategoryGroups(groups);
           console.info('Categories synced from Supabase:', groups.length, 'groups.');
+          return groups;
         } else {
-          // Supabase table is empty — seed it with defaults using upsert
           console.info('Seeding Supabase category_settings with defaults...');
           for (const group of this.defaultCategoryGroups) {
-            const { error: insertError } = await supabase.from('category_settings').upsert({
-              id: group.id,
-              name: group.name,
-              module_key: group.moduleKey,
-              description: group.description,
-              items: group.items
-            });
-            if (insertError) {
-              console.warn('Failed to seed category group:', group.id, insertError.message);
-            }
+            await this.syncToSupabase(group);
           }
           this.saveCategoryGroups(this.defaultCategoryGroups);
+          return this.defaultCategoryGroups;
         }
       } catch (err) {
         console.warn('Failed to sync categories with Supabase, using local cache.', err);
       }
     }
+    return this.getCategoryGroups();
   }
 
-  private static async syncToSupabase(group: MasterCategoryGroup): Promise<void> {
+  private static async syncToSupabase(group: MasterCategoryGroup): Promise<boolean> {
     if (isSupabaseConfigured() && supabase) {
       try {
-        await supabase.from('category_settings').upsert({
+        const { error } = await supabase.from('category_settings').upsert({
           id: group.id,
           name: group.name,
           module_key: group.moduleKey,
           description: group.description,
           items: group.items
         });
+        if (error) {
+          console.error('Failed to push category update to Supabase:', error.message);
+          return false;
+        }
+        return true;
       } catch (err) {
         console.warn('Failed to push category settings update to Supabase.', err);
+        return false;
       }
     }
+    return true;
   }
 
   public static getCategoryGroups(): MasterCategoryGroup[] {
@@ -164,7 +165,7 @@ export class CategoryStoreService {
     return group ? group.items : [];
   }
 
-  public static addCategory(moduleKey: CategoryModuleKey, newCategoryName: string): boolean {
+  public static async addCategory(moduleKey: CategoryModuleKey, newCategoryName: string): Promise<boolean> {
     const trimmed = newCategoryName.trim();
     if (!trimmed) return false;
 
@@ -175,14 +176,14 @@ export class CategoryStoreService {
       if (!exists) {
         group.items.push(trimmed);
         this.saveCategoryGroups(groups);
-        this.syncToSupabase(group);
+        await this.syncToSupabase(group);
         return true;
       }
     }
     return false;
   }
 
-  public static removeCategory(moduleKey: CategoryModuleKey, categoryName: string): boolean {
+  public static async removeCategory(moduleKey: CategoryModuleKey, categoryName: string): Promise<boolean> {
     const groups = this.getCategoryGroups();
     const group = groups.find((g) => g.moduleKey === moduleKey);
     if (group) {
@@ -190,18 +191,18 @@ export class CategoryStoreService {
       group.items = group.items.filter((i) => i.toLowerCase() !== categoryName.toLowerCase());
       if (group.items.length !== initialLength) {
         this.saveCategoryGroups(groups);
-        this.syncToSupabase(group);
+        await this.syncToSupabase(group);
         return true;
       }
     }
     return false;
   }
 
-  public static resetDefaults(): void {
+  public static async resetDefaults(): Promise<void> {
     this.saveCategoryGroups(this.defaultCategoryGroups);
     if (isSupabaseConfigured() && supabase) {
       for (const group of this.defaultCategoryGroups) {
-        this.syncToSupabase(group);
+        await this.syncToSupabase(group);
       }
     }
   }

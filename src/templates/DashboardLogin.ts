@@ -10,13 +10,7 @@ export function renderDashboardLogin(
   container: HTMLElement,
   onNavigate: (template: ActivePageTemplate) => void
 ): void {
-  container.className = 'template-executive-overview';
-  container.style.minHeight = '80vh';
-  container.style.display = 'flex';
-  container.style.alignItems = 'center';
-  container.style.justifyContent = 'center';
-  container.style.position = 'relative';
-  container.style.overflow = 'hidden';
+  container.className = 'template-auth-page';
 
   // 1. VIDEO BACKGROUND CONTAINER & SEQUENTIAL PLAYLIST LOOP
   const videoBgContainer = document.createElement('div');

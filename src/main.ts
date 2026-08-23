@@ -262,6 +262,8 @@ class DashboardApp {
   private async renderContentOnly(): Promise<void> {
     if (!this.contentRoot) return;
     this.contentRoot.innerHTML = '';
+    this.contentRoot.removeAttribute('style');
+    this.contentRoot.className = 'app-content';
 
     const onRetry = () => this.setViewState('loaded');
     const handleNav = (tmpl: ActivePageTemplate, id?: string) => this.navigate(tmpl, id);
@@ -307,13 +309,7 @@ class DashboardApp {
     }
 
     this.renderShell();
-
-    // Use requestAnimationFrame to allow the browser to fully paint the shell
-    // before injecting content — this prevents the "berantakan" layout bug
-    // that occurs when transitioning from a standalone page (login) to the dashboard
-    requestAnimationFrame(() => {
-      this.renderContentOnly();
-    });
+    this.renderContentOnly();
   }
 }
 

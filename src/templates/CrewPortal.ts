@@ -105,7 +105,7 @@ export async function renderCrewPortal(
         <!-- LEFT: AVATAR + NAME + ROLE + STATUS -->
         <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
           <div class="avatar" style="width: 44px; height: 44px; min-width: 44px; font-size: 16px; font-weight: bold; background: var(--color-accent); color: #FFFFFF; box-shadow: var(--shadow-glow-sm);">
-            ${crewMember.avatarInitials}
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
           </div>
           <div style="min-width: 0;">
             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">

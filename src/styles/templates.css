@@ -271,6 +271,16 @@
 }
 
 /* --- WELCOME SETUP & LOGIN CARDS RESPONSIVE STYLES --- */
+.template-auth-page {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
 .welcome-portal-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

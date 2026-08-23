@@ -114,7 +114,7 @@ export function renderSidebar(container: HTMLElement, options: SidebarOptions): 
     <!-- SIDEBAR FOOTER USER PROFILE -->
     <div class="sidebar-footer">
       <button class="user-profile-button" title="Soenrect (Pasoendan Creative Project)">
-        <div class="avatar" style="background: var(--color-accent); color: #FFFFFF;">SP</div>
+        <div class="avatar" style="background: var(--color-accent); color: #FFFFFF;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>
         <div class="user-info">
           <div style="font-weight: var(--font-weight-medium); font-size: var(--text-xs); color: var(--color-foreground);">Soenrect</div>
           <div style="font-size: 11px; color: var(--color-foreground-muted);">Pasoendan Creative Project</div>
