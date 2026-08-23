@@ -44,8 +44,8 @@ function renderEquipmentImage(item: EquipmentItem): string {
 
 function renderPhotoSelectorHtml(currentImageUrl: string = '', prefix: string = 'eq'): string {
   return `
-    <div class="form-group" style="margin-top: var(--space-4);">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+    <div style="margin-bottom: var(--space-4);">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
         <label class="form-label" style="margin: 0;">Equipment Photo (Optional)</label>
         <div style="display: flex; gap: 4px; background: var(--color-surface-elevated); padding: 3px; border-radius: var(--radius-md); border: 1px solid var(--color-border);">
           <button type="button" class="btn btn-secondary btn-sm photo-mode-btn is-active" id="${prefix}-mode-file" style="padding: 3px 10px; font-size: 11px; height: 26px;">
@@ -59,15 +59,15 @@ function renderPhotoSelectorHtml(currentImageUrl: string = '', prefix: string = 
 
       <!-- FILE UPLOAD DROPZONE CONTAINER -->
       <div id="${prefix}-file-container">
-        <div id="${prefix}-dropzone" style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 22px 16px; border: 2px dashed var(--color-border-strong); background: var(--color-surface-elevated); border-radius: var(--radius-md); cursor: pointer; text-align: center; transition: all 0.2s ease;">
+        <div id="${prefix}-dropzone" style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 14px; border: 2px dashed var(--color-border-strong); background: var(--color-surface-elevated); border-radius: var(--radius-md); cursor: pointer; text-align: center; transition: all 0.2s ease;">
           <input type="file" id="${prefix}-file-input" accept="image/*" style="position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; z-index: 2;" />
-          <div style="width: 38px; height: 38px; border-radius: 50%; background: var(--color-accent-subtle); color: var(--color-accent); display: flex; align-items: center; justify-content: center; margin-bottom: 8px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--color-accent-subtle); color: var(--color-accent); display: flex; align-items: center; justify-content: center; margin-bottom: 6px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
           </div>
           <div style="font-size: var(--text-xs); font-weight: 600; color: var(--color-foreground);">
             Click to browse photo <span style="color: var(--color-foreground-muted); font-weight: normal;">or drag & drop image here</span>
           </div>
-          <div style="font-size: 11px; color: var(--color-foreground-subtle); margin-top: 4px;">
+          <div style="font-size: 11px; color: var(--color-foreground-subtle); margin-top: 2px;">
             Supports PNG, JPG, WEBP, or SVG
           </div>
         </div>
@@ -80,15 +80,15 @@ function renderPhotoSelectorHtml(currentImageUrl: string = '', prefix: string = 
       </div>
 
       <!-- IMAGE PREVIEW CARD BOX -->
-      <div id="${prefix}-preview-box" style="margin-top: 10px; display: ${currentImageUrl ? 'flex' : 'none'}; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--color-surface-elevated); border: 1px solid var(--color-accent); border-radius: var(--radius-md);">
-        <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
-          <img id="${prefix}-preview-img" src="${currentImageUrl}" alt="Photo Preview" style="width: 48px; height: 48px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--color-border);" />
-          <div style="min-width: 0;">
-            <div style="font-size: 12px; font-weight: 600; color: var(--color-foreground);" id="${prefix}-preview-name">Photo Attached</div>
+      <div id="${prefix}-preview-box" style="margin-top: 10px; display: ${currentImageUrl ? 'flex' : 'none'}; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 10px 14px; background: var(--color-surface-elevated); border: 1px solid var(--color-accent); border-radius: var(--radius-md);">
+        <div style="display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1;">
+          <img id="${prefix}-preview-img" src="${currentImageUrl}" alt="Photo Preview" style="width: 42px; height: 42px; min-width: 42px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--color-border); flex-shrink: 0;" />
+          <div style="min-width: 0; flex: 1;">
+            <div style="font-size: 12px; font-weight: 600; color: var(--color-foreground); word-break: break-word;" id="${prefix}-preview-name">Photo Attached</div>
             <div style="font-size: 11px; color: var(--color-success); font-weight: 500; margin-top: 2px;">&check; Ready for asset record</div>
           </div>
         </div>
-        <button type="button" class="btn btn-tertiary btn-sm" id="${prefix}-remove-photo-btn" style="color: var(--color-danger); font-size: 11px; padding: 4px 8px;">
+        <button type="button" class="btn btn-tertiary btn-sm" id="${prefix}-remove-photo-btn" style="color: var(--color-danger); font-size: 11px; padding: 5px 10px; font-weight: 600; flex-shrink: 0;">
           Remove
         </button>
       </div>
@@ -891,7 +891,7 @@ export async function renderEquipmentManagement(
           <label class="form-label">Equipment Name</label>
           <input type="text" class="form-control" id="add-eq-name" placeholder="e.g. Panasonic 30K Lumens DLP Laser Projector" />
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-3); margin-bottom: var(--space-4);">
+        <div class="eq-modal-grid-row">
           <div class="form-group">
             <label class="form-label">Category</label>
             <select class="form-control" id="add-eq-category">
@@ -974,7 +974,7 @@ function openEditEquipmentModal(item: EquipmentItem, onSaved?: () => void): void
         <input type="text" class="form-control" id="edit-eq-name" value="${item.name}" />
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: var(--space-3); margin-bottom: var(--space-4);">
+      <div class="eq-modal-grid-row">
         <div class="form-group">
           <label class="form-label">Category</label>
           <select class="form-control" id="edit-eq-category">

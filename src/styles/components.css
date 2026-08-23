@@ -974,6 +974,21 @@
   }
 }
 
+/* --- EQUIPMENT FORM MODAL RESPONSIVE GRID --- */
+.eq-modal-grid-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+@media (max-width: 540px) {
+  .eq-modal-grid-row {
+    grid-template-columns: 1fr !important;
+    gap: var(--space-3);
+  }
+}
+
 /* --- PROJECT DETAIL MOBILE RESPONSIVE --- */
 .project-subtabs-nav {
   display: grid;

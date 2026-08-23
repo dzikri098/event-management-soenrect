@@ -546,31 +546,42 @@ export async function renderProjectCrewDetail(
                         </div>
                         <div class="font-mono" style="font-size: 11px; color: var(--color-foreground-subtle);">${crew.phone || 'No Phone'}</div>
                       </div>
-                    </div>
-
-                    <!-- ALLOCATED GEAR SECTION -->
+                                    <!-- ALLOCATED GEAR SECTION -->
                     <div style="background: var(--color-surface); padding: 10px 12px; border-radius: var(--radius-md); border: 1px solid var(--color-border);">
                       <div style="font-size: 11px; font-weight: 600; color: var(--color-foreground-subtle); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
-                        Assigned Gear (${crew.assignedEquipmentIds.length})
+                        Assigned Gear (${crew.assignedEquipmentIds.length} Unit${crew.assignedEquipmentIds.length !== 1 ? 's' : ''})
                       </div>
                       <div style="display: flex; flex-direction: column; gap: 6px;">
-                        ${crew.assignedEquipmentIds.length === 0
-                          ? `<span style="font-size: 11.5px; color: var(--color-foreground-subtle);">No gear allocated</span>`
-                          : crew.assignedEquipmentIds.map((eqId: string) => {
+                        ${(() => {
+                          if (crew.assignedEquipmentIds.length === 0) {
+                            return `<span style="font-size: 11.5px; color: var(--color-foreground-subtle);">No gear allocated</span>`;
+                          }
+                          const gearMap = new Map<string, number>();
+                          crew.assignedEquipmentIds.forEach((id: string) => {
+                            gearMap.set(id, (gearMap.get(id) || 0) + 1);
+                          });
+                          return Array.from(gearMap.entries())
+                            .map(([eqId, count]) => {
                               const eq = getEquipmentInfo(eqId);
                               return `
-                                <div style="display: flex; align-items: center; gap: 8px; padding: 5px 8px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-sm);">
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-accent); flex-shrink: 0;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                                  <span style="font-size: 11.5px; color: var(--color-accent); font-weight: 600;">
-                                    ${eq ? eq.name : eqId}
-                                  </span>
-                                  ${eq ? `<span class="font-mono" style="font-size: 10px; color: var(--color-foreground-muted); margin-left: auto;">${eq.serialNumber}</span>` : ''}
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 8px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-sm);">
+                                  <div style="display: flex; align-items: center; gap: 6px; min-width: 0;">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-accent); flex-shrink: 0;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                    <span style="font-size: 11.5px; color: var(--color-accent); font-weight: 600; word-break: break-word;">
+                                      ${eq ? eq.name : eqId}
+                                    </span>
+                                  </div>
+                                  <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                                    ${eq ? `<span class="font-mono" style="font-size: 10px; color: var(--color-foreground-muted);">${eq.serialNumber}</span>` : ''}
+                                    <span class="badge badge-orange font-mono" style="font-size: 10px; padding: 2px 6px;">${count} Unit${count > 1 ? 's' : ''}</span>
+                                  </div>
                                 </div>
                               `;
-                            }).join('')
-                        }
+                            })
+                            .join('');
+                        })()}
                       </div>
-                    </div>
+                    </div>      </div>
 
                     <!-- ACTION BUTTONS FOOTER -->
                     <div style="display: flex; align-items: center; gap: 8px; padding-top: 8px; border-top: 1px solid var(--color-border);">

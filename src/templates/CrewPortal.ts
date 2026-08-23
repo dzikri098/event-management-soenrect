@@ -240,7 +240,20 @@ export async function renderCrewPortal(
     assignedProjects.forEach((proj: ProjectRecord) => {
       const crewAssigned = proj.crewList.find((c) => c.crewId === crewMember.id || c.name === crewMember.name);
       const assignedGearIds = crewAssigned?.assignedEquipmentIds || [];
-      const assignedGearItems = equipment.filter((eq) => assignedGearIds.includes(eq.id));
+
+      // Group assigned equipment IDs by equipment item ID and calculate allocated quantity
+      const assignedMap = new Map<string, number>();
+      assignedGearIds.forEach((id) => {
+        assignedMap.set(id, (assignedMap.get(id) || 0) + 1);
+      });
+
+      const assignedGearItems = Array.from(assignedMap.entries()).map(([eqId, count]) => {
+        const eq = equipment.find((e) => e.id === eqId);
+        return {
+          equipment: eq,
+          assignedQty: count
+        };
+      });
 
       const projCard = document.createElement('div');
       projCard.className = 'card';
@@ -255,7 +268,6 @@ export async function renderCrewPortal(
               ${proj.projectName}
             </h4>
           </div>
-          <span class="badge badge-orange"><span class="badge-dot"></span>${proj.status}</span>
         </div>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: var(--space-4);">
@@ -304,30 +316,31 @@ export async function renderCrewPortal(
 
         <div>
           <div style="font-size: 11px; font-weight: bold; text-transform: uppercase; color: var(--color-foreground-subtle); margin-bottom: 8px;">
-            Allocated Gear & Equipment (${assignedGearItems.length}):
+            Allocated Gear & Equipment (${assignedGearIds.length} Unit${assignedGearIds.length !== 1 ? 's' : ''}):
           </div>
           <div style="display: flex; flex-direction: column; gap: 8px;">
-            ${assignedGearItems.length > 0
-          ? assignedGearItems
-            .map(
-              (g) => `
-              <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md); gap: 10px;">
-                <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
-                  <div style="width: 32px; height: 32px; min-width: 32px; border-radius: var(--radius-sm); background: var(--color-accent-subtle); color: var(--color-accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+            ${
+              assignedGearItems.length > 0
+                ? assignedGearItems
+                    .map(
+                      ({ equipment: g, assignedQty }) => `
+                  <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md); gap: 10px;">
+                    <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+                      <div style="width: 32px; height: 32px; min-width: 32px; border-radius: var(--radius-sm); background: var(--color-accent-subtle); color: var(--color-accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                      </div>
+                      <div style="min-width: 0;">
+                        <div style="font-size: 12px; font-weight: 600; color: var(--color-foreground); word-break: break-word;">${g ? g.name : 'Equipment Asset'}</div>
+                        <div style="font-size: 10px; color: var(--color-foreground-subtle); margin-top: 2px;">${g ? g.category : 'Production Gear'} &bull; S/N: ${g ? g.serialNumber : '-'}</div>
+                      </div>
+                    </div>
+                    <span class="badge badge-orange font-mono" style="font-size: 11px; flex-shrink: 0; padding: 4px 8px;">${assignedQty} Unit${assignedQty > 1 ? 's' : ''}</span>
                   </div>
-                  <div style="min-width: 0;">
-                    <div style="font-size: 12px; font-weight: 600; color: var(--color-foreground); word-break: break-word;">${g.name}</div>
-                    <div style="font-size: 10px; color: var(--color-foreground-subtle); margin-top: 2px;">${g.category || 'Production Gear'} &bull; S/N: ${g.serialNumber || 'SN-REC-892'}</div>
-                  </div>
-                </div>
-                <span class="badge badge-orange font-mono" style="font-size: 11px; flex-shrink: 0; padding: 4px 8px;">${g.quantity || 1} Units</span>
-              </div>
-            `
-            )
-            .join('')
-          : '<span style="font-size: 11px; color: var(--color-foreground-subtle);">No specific gear allocated</span>'
-        }
+                `
+                    )
+                    .join('')
+                : '<span style="font-size: 11px; color: var(--color-foreground-subtle);">No specific gear allocated</span>'
+            }
           </div>
         </div>
       `;
