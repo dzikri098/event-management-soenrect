@@ -277,15 +277,19 @@ function computeEquipmentUsage(item: EquipmentItem, projects: ProjectRecord[]) {
   }
 
   const combinedHistory = [...projectDeployments, ...(item.history || [])];
-  const isCurrentlyDeployed = projectDeployments.length > 0 || item.status === 'In Use';
+  const activeDeployments = combinedHistory.filter(
+    (h) => !h.notes?.includes('[RETURNED]') && h.projectName !== 'Returned to Inventory'
+  );
+  const isCurrentlyDeployed = activeDeployments.length > 0;
   const effectiveStatus: 'Available' | 'In Use' | 'Maintenance' | 'Retired' = isCurrentlyDeployed
     ? 'In Use'
     : item.status;
-  const activePIC = combinedHistory[0];
+  const activePIC = activeDeployments[0] || combinedHistory[0];
 
   return {
     effectiveStatus,
     combinedHistory,
+    activeDeployments,
     activePIC,
     isCurrentlyDeployed
   };
@@ -293,17 +297,21 @@ function computeEquipmentUsage(item: EquipmentItem, projects: ProjectRecord[]) {
 
 function openReturnEquipmentModal(
   item: EquipmentItem,
+  targetLog: EquipmentUsageHistory | undefined,
   projectsList: ProjectRecord[],
   onComplete: () => void
 ): void {
   const modalHtml = `
     <div>
-      <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding: 14px 16px; background-color: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md);">
+      <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 16px; padding: 14px; background-color: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md);">
         ${renderEquipmentImage(item)}
         <div>
           <div style="font-size: var(--text-base); font-weight: bold; color: var(--color-foreground);">${item.name}</div>
           <div style="font-size: 11.5px; color: var(--color-foreground-muted); margin-top: 2px;">
-            Asset ID: <span class="font-mono">${item.id}</span> &bull; Stock Qty: <strong style="color: var(--color-accent);">${item.quantity || 1} Units</strong>
+            Returning Log: <strong style="color: var(--color-accent);">${targetLog ? targetLog.responsiblePerson : 'Active Assignment'}</strong> ${targetLog ? `(${targetLog.responsibleRole})` : ''}
+          </div>
+          <div style="font-size: 11px; color: var(--color-foreground-subtle); margin-top: 2px;">
+            Project / Event: <strong>${targetLog ? targetLog.projectName : 'Deployed Event'}</strong>
           </div>
         </div>
       </div>
@@ -318,52 +326,52 @@ function openReturnEquipmentModal(
 
       <div class="form-group">
         <label class="form-label">Return Notes / Inspection Summary</label>
-        <textarea class="form-control" id="return-eq-notes" rows="3" placeholder="e.g. Item returned from event deployment in good working condition. Checked by PIC."></textarea>
+        <textarea class="form-control" id="return-eq-notes" rows="3" placeholder="e.g. Item returned by ${targetLog ? targetLog.responsiblePerson : 'PIC'} in clean working condition after ${targetLog ? targetLog.projectName : 'event'}."></textarea>
       </div>
     </div>
   `;
 
   new ModalDialog({
-    title: `Return Equipment: ${item.name}`,
+    title: `Return Assignment: ${item.name}`,
     contentHtml: modalHtml,
-    confirmText: 'Confirm Return & Update Stock',
+    confirmText: 'Confirm Return & Update Inventory',
     cancelText: 'Cancel',
     onConfirm: async () => {
       const returnStatus = (document.getElementById('return-eq-status') as HTMLSelectElement).value as any;
       const returnNotes =
         (document.getElementById('return-eq-notes') as HTMLTextAreaElement).value.trim() ||
-        'Returned to main inventory.';
+        `Returned to inventory for ${targetLog ? targetLog.projectName : 'deployment'}.`;
 
       const todayStr = new Date().toISOString().split('T')[0];
       const returnHistoryEntry: EquipmentUsageHistory = {
         id: `return-${Date.now()}`,
         equipmentId: item.id,
-        responsiblePerson: 'Warehouse Manager',
-        responsibleRole: 'Inventory Check',
-        responsiblePhone: '+62 812-3456-7890',
-        projectName: 'Returned to Inventory',
-        startDate: todayStr,
+        responsiblePerson: targetLog ? targetLog.responsiblePerson : 'Warehouse Manager',
+        responsibleRole: `Returned (${targetLog ? targetLog.responsibleRole : 'Check'})`,
+        responsiblePhone: targetLog ? targetLog.responsiblePhone : '+62 812-3456-7890',
+        projectName: targetLog ? targetLog.projectName : 'Returned to Inventory',
+        startDate: targetLog ? targetLog.startDate : todayStr,
         endDate: todayStr,
         notes: `[RETURNED] ${returnNotes}`
       };
 
       const updatedHistory = [returnHistoryEntry, ...(item.history || [])];
 
-      // Update equipment status
-      await DataService.updateEquipment(item.id, {
-        status: returnStatus,
-        history: updatedHistory,
-        additionalNotes: returnNotes
-      });
-
-      // Unassign this equipment ID from all projects
+      // 1. Unassign this equipment ID from matching project crew list
       for (const proj of projectsList) {
         if (proj.crewList && Array.isArray(proj.crewList)) {
           let updated = false;
           proj.crewList.forEach((c) => {
             if (c.assignedEquipmentIds && c.assignedEquipmentIds.includes(item.id)) {
-              c.assignedEquipmentIds = c.assignedEquipmentIds.filter((id) => id !== item.id);
-              updated = true;
+              if (
+                !targetLog ||
+                c.name.toLowerCase().includes(targetLog.responsiblePerson.toLowerCase()) ||
+                targetLog.responsiblePerson.toLowerCase().includes(c.name.toLowerCase()) ||
+                (c.crewId && targetLog.id && targetLog.id.includes(c.crewId))
+              ) {
+                c.assignedEquipmentIds = c.assignedEquipmentIds.filter((id) => id !== item.id);
+                updated = true;
+              }
             }
           });
           if (updated) {
@@ -371,6 +379,18 @@ function openReturnEquipmentModal(
           }
         }
       }
+
+      // 2. Re-check if any other active project deployments remain for this equipment
+      const freshProjects = await DataService.getProjects();
+      const checkUsage = computeEquipmentUsage(item, freshProjects);
+      const finalStatus = checkUsage.isCurrentlyDeployed ? 'In Use' : returnStatus;
+
+      // 3. Update equipment status & history in DB
+      await DataService.updateEquipment(item.id, {
+        status: finalStatus,
+        history: updatedHistory,
+        additionalNotes: returnNotes
+      });
 
       onComplete();
     }
@@ -440,8 +460,8 @@ export async function renderEquipmentManagement(
 
   statsGrid.innerHTML = `
     <div class="card" style="padding: var(--space-4) var(--space-5);">
-      <div style="display: flex; align-items: center; justify-content: space-between;">
-        <div style="font-size: 11px; font-weight: bold; text-transform: uppercase; color: var(--color-foreground-subtle); letter-spacing: 0.05em;">Total Stock Units</div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap;">
+        <div style="font-size: 11px; font-weight: bold; text-transform: uppercase; color: var(--color-foreground-subtle); letter-spacing: 0.05em; min-width: 0;">Total Stock Units</div>
         <span class="badge badge-neutral">Inventory</span>
       </div>
       <div class="font-mono" style="font-size: var(--text-2xl); font-weight: bold; color: var(--color-foreground); margin-top: 6px;">${totalQuantity} Units</div>
@@ -449,27 +469,27 @@ export async function renderEquipmentManagement(
     </div>
 
     <div class="card" style="padding: var(--space-4) var(--space-5);">
-      <div style="display: flex; align-items: center; justify-content: space-between;">
-        <div style="font-size: 11px; font-weight: bold; text-transform: uppercase; color: var(--color-foreground-subtle); letter-spacing: 0.05em;">In Use / Deployed</div>
-        <span class="badge badge-orange"><span class="badge-dot"></span>Active</span>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap;">
+        <div style="font-size: 11px; font-weight: bold; text-transform: uppercase; color: var(--color-foreground-subtle); letter-spacing: 0.05em; min-width: 0;">In Use / Deployed</div>
+        <span class="badge badge-orange" style="font-size: 10px; padding: 2px 6px; flex-shrink: 0;"><span class="badge-dot"></span>Active</span>
       </div>
       <div class="font-mono" style="font-size: var(--text-2xl); font-weight: bold; color: var(--color-accent); margin-top: 6px;">${inUseQty} Units</div>
       <div style="font-size: 11px; color: var(--color-foreground-muted); margin-top: 2px;">Deployed on Stage/Events</div>
     </div>
 
     <div class="card" style="padding: var(--space-4) var(--space-5);">
-      <div style="display: flex; align-items: center; justify-content: space-between;">
-        <div style="font-size: 11px; font-weight: bold; text-transform: uppercase; color: var(--color-foreground-subtle); letter-spacing: 0.05em;">Available</div>
-        <span class="badge badge-success"><span class="badge-dot"></span>Ready</span>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap;">
+        <div style="font-size: 11px; font-weight: bold; text-transform: uppercase; color: var(--color-foreground-subtle); letter-spacing: 0.05em; min-width: 0;">Available</div>
+        <span class="badge badge-success" style="font-size: 10px; padding: 2px 6px; flex-shrink: 0;"><span class="badge-dot"></span>Ready</span>
       </div>
       <div class="font-mono" style="font-size: var(--text-2xl); font-weight: bold; color: var(--color-success); margin-top: 6px;">${availableQty} Units</div>
       <div style="font-size: 11px; color: var(--color-foreground-muted); margin-top: 2px;">In Warehouse / Storage</div>
     </div>
 
     <div class="card" style="padding: var(--space-4) var(--space-5);">
-      <div style="display: flex; align-items: center; justify-content: space-between;">
-        <div style="font-size: 11px; font-weight: bold; text-transform: uppercase; color: var(--color-foreground-subtle); letter-spacing: 0.05em;">Maintenance</div>
-        <span class="badge badge-warning"><span class="badge-dot"></span>Servicing</span>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap;">
+        <div style="font-size: 11px; font-weight: bold; text-transform: uppercase; color: var(--color-foreground-subtle); letter-spacing: 0.05em; min-width: 0;">Maintenance</div>
+        <span class="badge badge-warning" style="font-size: 10px; padding: 2px 6px; flex-shrink: 0;"><span class="badge-dot"></span>Servicing</span>
       </div>
       <div class="font-mono" style="font-size: var(--text-2xl); font-weight: bold; color: var(--color-warning); margin-top: 6px;">${maintenanceQty} Units</div>
       <div style="font-size: 11px; color: var(--color-foreground-muted); margin-top: 2px;">Under Repair / Inspection</div>
@@ -495,10 +515,10 @@ export async function renderEquipmentManagement(
         <div style="font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-foreground-subtle); margin-bottom: var(--space-3);">
           Equipment Categories
         </div>
-        <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div class="eq-subtab-list-wrapper">
           <button class="eq-subtab-btn ${activeSubtab === 'ALL' ? 'active' : ''}" data-subtab="ALL">
             <span>All Categories</span>
-            <span class="badge badge-neutral font-mono">${equipmentList.length}</span>
+            <span class="badge badge-neutral font-mono" style="margin-left: 6px;">${equipmentList.length}</span>
           </button>
           ${CategoryStoreService.getCategories('equipment')
             .map((cat) => {
@@ -506,7 +526,7 @@ export async function renderEquipmentManagement(
               return `
                 <button class="eq-subtab-btn ${activeSubtab === cat ? 'active' : ''}" data-subtab="${cat}">
                   <span>${cat}</span>
-                  <span class="badge badge-neutral font-mono">${count}</span>
+                  <span class="badge badge-neutral font-mono" style="margin-left: 6px;">${count}</span>
                 </button>
               `;
             })
@@ -690,13 +710,6 @@ export async function renderEquipmentManagement(
                   ? item.bundledTools
                   : ['Wireless Remote Control', 'Standard HDMI 10m Cable', 'AC Power Cable'];
 
-              const returnBtnHtml =
-                isCurrentlyDeployed || effectiveStatus === 'In Use'
-                  ? `<button class="btn btn-secondary btn-sm return-equipment-btn" data-id="${item.id}" style="font-size: 11px; padding: 4px 10px; color: var(--color-success); border-color: var(--color-success); font-weight: 600;">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l-4 4 4 4"></path><path d="M5 15h11a5 5 0 0 0 5-5v-1"></path></svg> Return Asset
-                     </button>`
-                  : '';
-
               return `
                 <div class="eq-mobile-card">
                   <!-- CARD HEADER -->
@@ -760,16 +773,25 @@ export async function renderEquipmentManagement(
 
                   <!-- CARD ACTIONS FOOTER -->
                   <div class="eq-mobile-card-actions">
-                    ${returnBtnHtml}
-                    <button class="btn btn-tertiary btn-sm edit-equipment-btn" data-id="${item.id}">
-                      Edit Asset
-                    </button>
-                    <button class="btn btn-tertiary btn-sm view-history-btn" data-id="${item.id}">
-                      Log (${combinedHistory.length})
-                    </button>
-                    <button class="btn btn-destructive btn-sm delete-equipment-btn" data-id="${item.id}">
-                      Delete
-                    </button>
+                    ${
+                      isCurrentlyDeployed || effectiveStatus === 'In Use'
+                        ? `<button class="btn btn-secondary btn-sm return-equipment-btn" data-id="${item.id}" style="width: 100%; justify-content: center; font-size: 12px; font-weight: 600; color: var(--color-success); border-color: var(--color-success); padding: 8px 12px; margin-bottom: 2px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l-4 4 4 4"></path><path d="M5 15h11a5 5 0 0 0 5-5v-1"></path></svg>
+                            Return Asset to Inventory
+                           </button>`
+                        : ''
+                    }
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;">
+                      <button class="btn btn-tertiary btn-sm edit-equipment-btn" data-id="${item.id}" style="flex: 1; justify-content: center; font-size: 12px; padding: 6px 10px;">
+                        Edit Asset
+                      </button>
+                      <button class="btn btn-tertiary btn-sm view-history-btn" data-id="${item.id}" style="flex: 1; justify-content: center; font-size: 12px; padding: 6px 10px;">
+                        Log (${combinedHistory.length})
+                      </button>
+                      <button class="btn btn-destructive btn-sm delete-equipment-btn" data-id="${item.id}" style="font-size: 12px; padding: 6px 10px;">
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
               `;
@@ -787,7 +809,16 @@ export async function renderEquipmentManagement(
         const id = (e.currentTarget as HTMLElement).getAttribute('data-id');
         const item = equipmentList.find((e) => e.id === id);
         if (item) {
-          openReturnEquipmentModal(item, projectsList, () => renderEquipmentManagement(container, viewState));
+          const { activeDeployments, combinedHistory } = computeEquipmentUsage(item, projectsList);
+          if (activeDeployments.length === 1) {
+            openReturnEquipmentModal(item, activeDeployments[0], projectsList, () =>
+              renderEquipmentManagement(container, viewState)
+            );
+          } else {
+            openFullHistoryModal(item, combinedHistory, projectsList, () =>
+              renderEquipmentManagement(container, viewState)
+            );
+          }
         }
       });
     });
@@ -818,8 +849,8 @@ export async function renderEquipmentManagement(
         const item = equipmentList.find((e) => e.id === id);
         if (item) {
           const { combinedHistory } = computeEquipmentUsage(item, projectsList);
-          openFullHistoryModal(item, combinedHistory, () =>
-            openReturnEquipmentModal(item, projectsList, () => renderEquipmentManagement(container, viewState))
+          openFullHistoryModal(item, combinedHistory, projectsList, () =>
+            renderEquipmentManagement(container, viewState)
           );
         }
       });
@@ -1056,8 +1087,9 @@ function openStrictDeleteEquipmentModal(item: EquipmentItem, onDeleted?: () => v
 
 function openFullHistoryModal(
   item: EquipmentItem,
-  combinedHistory?: EquipmentUsageHistory[],
-  onReturnClick?: () => void
+  combinedHistory: EquipmentUsageHistory[],
+  projectsList: ProjectRecord[],
+  onComplete: () => void
 ): void {
   const logList = combinedHistory && combinedHistory.length > 0 ? combinedHistory : item.history;
   const tools =
@@ -1065,67 +1097,91 @@ function openFullHistoryModal(
       ? item.bundledTools
       : ['Wireless Remote Control', 'Standard HDMI 10m', 'AC Power Cable'];
 
-  const isDeployed = item.status === 'In Use' || (logList.length > 0 && !logList[0]?.notes?.includes('[RETURNED]'));
-
   const modalHtml = `
-    <div class="history-log-modal">
+    <div class="history-log-modal" style="width: 100%; box-sizing: border-border;">
       <!-- HEADER SUMMARY ITEM CARD -->
-      <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 20px; padding: 14px 16px; background-color: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md); flex-wrap: wrap;">
-        <div style="display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1;">
-          ${renderEquipmentImage(item)}
-          <div style="min-width: 0; flex: 1;">
-            <div style="font-size: var(--text-base); font-weight: bold; color: var(--color-foreground);">${item.name}</div>
-            <div style="font-size: var(--text-xs); color: var(--color-foreground-muted);">
-              Serial No: <span class="font-mono">${item.serialNumber}</span> &bull; Stock Qty: <strong style="color: var(--color-accent);">${item.quantity || 1} Units</strong> &bull; Category: ${item.category}
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; padding: 14px; background-color: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md); width: 100%; box-sizing: border-box;">
+        <div style="display: flex; align-items: flex-start; gap: 12px; width: 100%;">
+          <div style="flex-shrink: 0;">
+            ${renderEquipmentImage(item)}
+          </div>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: var(--text-base); font-weight: bold; color: var(--color-foreground); line-height: 1.3; word-break: break-word;">${item.name}</div>
+            
+            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; font-size: 11px; color: var(--color-foreground-muted);">
+              <span>Serial: <strong class="font-mono" style="color: var(--color-foreground);">${item.serialNumber || '-'}</strong></span>
+              <span>&bull;</span>
+              <span>Stock: <strong style="color: var(--color-accent);">${item.quantity || 1} Units</strong></span>
+              <span>&bull;</span>
+              <span>Cat: <strong style="color: var(--color-foreground);">${item.category}</strong></span>
             </div>
+
             <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;">
               ${tools.map((t) => `<span class="badge badge-neutral font-mono" style="font-size: 10px; padding: 2px 6px;">+ ${t}</span>`).join('')}
             </div>
-            ${item.additionalNotes ? `<div style="font-size: 11px; color: var(--color-warning); margin-top: 4px;">Notes: ${item.additionalNotes}</div>` : ''}
+
+            ${item.additionalNotes ? `<div style="font-size: 11px; color: var(--color-warning); margin-top: 4px; word-break: break-word;">Notes: ${item.additionalNotes}</div>` : ''}
           </div>
         </div>
-        ${
-          isDeployed && onReturnClick
-            ? `
-          <button type="button" class="btn btn-secondary btn-sm modal-return-btn" style="font-size: 12px; font-weight: 600; color: var(--color-success); border-color: var(--color-success); padding: 8px 14px; display: inline-flex; align-items: center; gap: 6px;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l-4 4 4 4"></path><path d="M5 15h11a5 5 0 0 0 5-5v-1"></path></svg>
-            Return Asset to Inventory
-          </button>
-        `
-            : ''
-        }
       </div>
 
-      <div style="font-size: var(--text-xs); font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-foreground-subtle); margin-bottom: 12px;">
+      <div style="font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-foreground-subtle); margin-bottom: 10px; word-break: break-word;">
         Chronological Assignment Log (${logList.length} Record${logList.length > 1 ? 's' : ''})
       </div>
 
-      <div style="display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; flex-direction: column; gap: 12px; width: 100%; box-sizing: border-box;">
         ${
           logList.length > 0
             ? logList
-                .map(
-                  (hist: EquipmentUsageHistory, index: number) => `
-              <div style="padding: 16px 20px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-left: 4px solid ${index === 0 ? 'var(--color-accent)' : 'var(--color-border-strong)'}; border-radius: var(--radius-md);">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
-                  <div style="display: flex; align-items: center; gap: 8px;">
-                    <div style="font-size: var(--text-sm); font-weight: bold; color: var(--color-foreground);">${hist.responsiblePerson}</div>
-                    <span class="badge badge-neutral">${hist.responsibleRole}</span>
-                    ${index === 0 ? `<span class="badge badge-orange"><span class="badge-dot"></span>Most Recent</span>` : ''}
+                .map((hist: EquipmentUsageHistory, index: number) => {
+                  const isReturned =
+                    hist.notes?.includes('[RETURNED]') || hist.projectName === 'Returned to Inventory';
+
+                  return `
+              <div style="padding: 14px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-left: 4px solid ${index === 0 && !isReturned ? 'var(--color-accent)' : 'var(--color-border-strong)'}; border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 8px; width: 100%; box-sizing: border-box;">
+                
+                <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
+                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; width: 100%;">
+                    <div style="font-size: 14px; font-weight: 700; color: var(--color-foreground); word-break: break-word;">${hist.responsiblePerson}</div>
+                    <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                      ${
+                        isReturned
+                          ? `<span class="badge badge-success" style="font-size: 10px; padding: 2px 6px;"><span class="badge-dot"></span>Returned</span>`
+                          : index === 0
+                          ? `<span class="badge badge-orange" style="font-size: 10px; padding: 2px 6px;"><span class="badge-dot"></span>Active Deployment</span>`
+                          : `<span class="badge badge-neutral" style="font-size: 10px; padding: 2px 6px;">Deployment Record</span>`
+                      }
+                      <span class="badge badge-neutral" style="font-size: 10px; padding: 2px 6px; word-break: break-word;">${hist.responsibleRole}</span>
+                    </div>
                   </div>
-                  <div class="font-mono" style="font-size: var(--text-xs); color: var(--color-accent); font-weight: 600; background: var(--color-accent-subtle); padding: 4px 10px; border-radius: var(--radius-full); border: 1px solid var(--color-accent-border);">
+                  
+                  <div class="font-mono" style="font-size: 11px; color: var(--color-accent); font-weight: 600; background: var(--color-accent-subtle); padding: 3px 8px; border-radius: var(--radius-sm); border: 1px solid var(--color-accent-border); width: fit-content;">
                     ${hist.startDate} &rarr; ${hist.endDate}
                   </div>
                 </div>
 
-                <div style="font-size: var(--text-xs); color: var(--color-foreground-muted); margin-bottom: 8px; line-height: 1.5;">
-                  <strong>Project / Event:</strong> ${hist.projectName} &bull; <strong>Contact Phone:</strong> <span class="font-mono">${hist.responsiblePhone || 'N/A'}</span>
+                <div style="font-size: 11.5px; color: var(--color-foreground-muted); line-height: 1.45; word-break: break-word;">
+                  <div><strong>Project / Event:</strong> ${hist.projectName}</div>
+                  <div><strong>Contact Phone:</strong> <span class="font-mono" style="color: var(--color-foreground);">${hist.responsiblePhone || 'N/A'}</span></div>
                 </div>
 
-                ${hist.notes ? `<div style="font-size: var(--text-xs); color: var(--color-foreground-subtle); font-style: italic; padding: 8px 12px; background: var(--color-bg); border-radius: var(--radius-sm); border-left: 2px solid var(--color-border-strong);">"${hist.notes}"</div>` : ''}
+                ${hist.notes ? `<div style="font-size: 11px; color: var(--color-foreground-subtle); font-style: italic; padding: 6px 10px; background: var(--color-surface); border-radius: var(--radius-sm); border-left: 2px solid var(--color-border-strong); word-break: break-word;">"${hist.notes}"</div>` : ''}
+
+                ${
+                  !isReturned
+                    ? `
+                  <div style="padding-top: 8px; border-top: 1px solid var(--color-border-subtle); display: flex; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary btn-sm log-entry-return-btn" data-log-id="${hist.id}" style="font-size: 11.5px; font-weight: 600; color: var(--color-success); border-color: var(--color-success); padding: 6px 12px; display: inline-flex; align-items: center; gap: 4px; width: 100%; justify-content: center;">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l-4 4 4 4"></path><path d="M5 15h11a5 5 0 0 0 5-5v-1"></path></svg>
+                      Return This Assignment
+                    </button>
+                  </div>
+                `
+                    : ''
+                }
               </div>
-            `
-                )
+            `;
+                })
                 .join('')
             : `
               <div style="text-align: center; padding: 24px; color: var(--color-foreground-muted); font-size: 13px;">
@@ -1145,12 +1201,14 @@ function openFullHistoryModal(
 
   modal.open();
 
-  if (isDeployed && onReturnClick) {
-    document.querySelector('.modal-return-btn')?.addEventListener('click', () => {
+  document.querySelectorAll('.log-entry-return-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      const logId = (e.currentTarget as HTMLElement).getAttribute('data-log-id');
+      const targetLog = logList.find((l) => l.id === logId);
       modal.close();
-      onReturnClick();
+      openReturnEquipmentModal(item, targetLog, projectsList, onComplete);
     });
-  }
+  });
 }
 
 function createEquipmentSkeleton(): HTMLElement {

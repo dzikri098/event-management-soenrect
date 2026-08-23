@@ -154,44 +154,50 @@ export async function renderTimelineSchedule(
                       : 'On-site technical setup and signal feed routing with OB Van.');
 
                   return `
-                    <div class="agenda-item-card timeline-block" data-id="${evt.id}" style="border-left-width: 4px;">
-                      <div class="agenda-item-header">
-                        <div class="agenda-time-pill">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                          <strong style="color: var(--color-foreground);">${evt.date}</strong>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                          ${evt.isAutoCreated ? `<span class="badge badge-accent" style="font-size: 10px; font-weight: 600;" title="Auto-generated from Project Data">Auto: Project</span>` : ''}
-                          <span class="badge ${typeBadge}"><span class="badge-dot"></span>${evt.type}</span>
-                          <span class="badge badge-neutral">Priority: ${evt.priority}</span>
+                    <div class="agenda-item-card timeline-block" data-id="${evt.id}" style="border-left-width: 4px; padding: 14px; background: var(--color-surface-elevated); border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm);">
+                      
+                      <!-- HEADER ROW: DATE & BADGES -->
+                      <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                          <div class="agenda-time-pill font-mono" style="font-size: 11.5px; font-weight: 700; color: var(--color-accent); display: inline-flex; align-items: center; gap: 6px;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            <span>${evt.date}</span>
+                          </div>
+                          <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                            ${evt.isAutoCreated ? `<span class="badge badge-accent" style="font-size: 10px; font-weight: 600;">Auto: Project</span>` : ''}
+                            <span class="badge ${typeBadge}"><span class="badge-dot"></span>${evt.type}</span>
+                            <span class="badge badge-neutral" style="font-size: 10px;">Priority: ${evt.priority}</span>
+                          </div>
                         </div>
                       </div>
 
-                      <div class="agenda-title" style="font-size: var(--text-base); margin-top: 4px;">${evt.title}</div>
+                      <!-- EVENT TITLE -->
+                      <div class="agenda-title" style="font-size: 15px; font-weight: 700; color: var(--color-foreground); line-height: 1.3; word-break: break-word;">${evt.title}</div>
 
                       <!-- ADDITIONAL DESCRIPTION -->
-                      <div style="font-size: var(--text-xs); color: var(--color-foreground-muted); margin-top: 6px; line-height: 1.45; background: var(--color-surface-elevated); padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--color-border);">
+                      <div style="font-size: 11.5px; color: var(--color-foreground-muted); margin-top: 8px; line-height: 1.45; background: var(--color-surface); padding: 8px 12px; border-radius: var(--radius-md); border: 1px solid var(--color-border-subtle); word-break: break-word;">
                         <strong style="color: var(--color-foreground-subtle);">Description / Notes:</strong> ${defaultDesc}
                       </div>
 
-                      <div class="agenda-item-footer" style="margin-top: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-                        <div style="display: flex; align-items: center; gap: 6px; font-size: var(--text-xs); color: var(--color-accent); font-weight: 500;">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                      <!-- FOOTER: CONNECTED EVENT & ACTION BUTTONS -->
+                      <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--color-border-subtle); display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                        <div style="display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--color-accent); font-weight: 600; word-break: break-word;">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
                           <span>Connected Event: <strong>${evt.projectName || 'Unassociated'}</strong></span>
                         </div>
 
-                        <div class="btn-group">
-                          <a href="${gcalUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 4px 10px; text-decoration: none;" title="Add to Google Calendar">
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; width: 100%;">
+                          <a href="${gcalUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 5px 10px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 600;" title="Add to Google Calendar">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
                             + Google Calendar
                           </a>
                           ${
                             evt.isAutoCreated
-                              ? `<span class="badge badge-neutral" style="font-size: 11px; padding: 4px 10px; cursor: not-allowed;" title="Edit date in Project Data page">🔒 Project Event</span>`
-                              : `<button class="btn btn-tertiary btn-sm associate-evt-btn" data-id="${evt.id}" style="font-size: 11px; padding: 4px 10px;">
+                              ? `<span class="badge badge-neutral" style="font-size: 11px; padding: 5px 10px; cursor: not-allowed; font-weight: 600;" title="Edit date in Project Data page">🔒 Project Event</span>`
+                              : `<button class="btn btn-tertiary btn-sm associate-evt-btn" data-id="${evt.id}" style="font-size: 11px; padding: 5px 10px; font-weight: 600;">
                                   Associate &rarr;
                                 </button>
-                                <button class="btn btn-destructive btn-sm delete-evt-btn" data-id="${evt.id}" style="font-size: 11px; padding: 4px 10px;" title="Delete Timeline Schedule">
+                                <button class="btn btn-destructive btn-sm delete-evt-btn" data-id="${evt.id}" style="font-size: 11px; padding: 5px 10px;" title="Delete Timeline Schedule">
                                   Delete
                                 </button>`
                           }

@@ -343,28 +343,36 @@ export async function renderExecutiveOverview(
 
     <!-- MOBILE CREW ROSTER CARD LIST VIEW -->
     <div class="table-card-list">
-      ${crewMembers.map((crew: CrewMember) => {
-        const statusBadge = crew.status === 'On Assignment' ? 'badge-orange' : crew.status === 'Available' ? 'badge-success' : 'badge-neutral';
-        return `
-          <div class="table-card-item clickable-crew-row" data-id="${crew.id}" style="cursor: pointer; padding: 14px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-            <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
-              <div class="avatar-mini" style="width: 32px; height: 32px; min-width: 32px; flex-shrink: 0; font-size: 11px; font-weight: bold; background: var(--color-accent); color: #FFFFFF;">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+      ${crewMembers
+        .map((crew: CrewMember) => {
+          const statusBadge =
+            crew.status === 'On Assignment'
+              ? 'badge-orange'
+              : crew.status === 'Available'
+              ? 'badge-success'
+              : 'badge-neutral';
+          return `
+          <div class="table-card-item clickable-crew-row" data-id="${crew.id}" style="cursor: pointer; padding: 14px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
+              <div class="avatar-mini" style="width: 36px; height: 36px; min-width: 36px; flex-shrink: 0; font-size: 12px; font-weight: bold; background: var(--color-accent); color: #FFFFFF;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
               </div>
               <div style="flex: 1; min-width: 0;">
-                <div style="font-weight: 700; color: var(--color-foreground); font-size: 13.5px; word-break: break-word;">${crew.name}</div>
-                <div style="font-size: 11px; color: var(--color-foreground-subtle); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${crew.role} &bull; ${crew.phone || ''}</div>
+                <div style="font-weight: 700; color: var(--color-foreground); font-size: 14px; line-height: 1.3; word-break: break-word;">${crew.name}</div>
+                <div style="font-size: 11.5px; color: var(--color-foreground-subtle); margin-top: 2px; word-break: break-word;">${crew.role}</div>
+                <div class="font-mono" style="font-size: 11px; color: var(--color-accent); font-weight: 500; margin-top: 2px;">${crew.phone || '+62 812-3456-7890'}</div>
               </div>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 8px; border-top: 1px solid var(--color-border-subtle); width: 100%;">
               <span class="badge ${statusBadge}"><span class="badge-dot"></span>${crew.status}</span>
-              <a href="/crew-detail?id=${crew.id}" data-route-link="/crew-detail?id=${crew.id}" class="btn btn-tertiary btn-sm" style="padding: 4px 8px;">
-                Profile &rarr;
+              <a href="/crew-detail?id=${crew.id}" data-route-link="/crew-detail?id=${crew.id}" class="btn btn-tertiary btn-sm" style="font-size: 12px; padding: 4px 10px; font-weight: 600;">
+                View Profile &rarr;
               </a>
             </div>
           </div>
         `;
-      }).join('')}
+        })
+        .join('')}
     </div>
   `;
   leftCol.appendChild(crewCard);
