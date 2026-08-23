@@ -141,9 +141,12 @@ export async function renderDataManagement(
           contentHtml: `<p style="font-size: 14px; color: var(--color-foreground-muted);">Are you sure you want to permanently delete <strong>${selectedIds.size} selected account(s)</strong> from the Supabase database? This action cannot be undone.</p>`,
           confirmText: 'Delete Permanently',
           cancelText: 'Cancel',
-          onConfirm: () => {
+          onConfirm: async () => {
+            for (const id of selectedIds) {
+              await DataService.deleteCrewMember(id);
+            }
             selectedIds.clear();
-            updateTableData();
+            await updateTableData();
           }
         });
         dialog.open();

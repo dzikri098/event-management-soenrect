@@ -131,13 +131,6 @@ export async function renderCrewPortalLogin(
       </button>
     </form>
 
-    <!-- ROSTER PASSCODES QUICK HELPER -->
-    <div style="padding: 10px 12px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 11px; color: var(--color-foreground-subtle);">
-      <div style="font-weight: bold; color: var(--color-success); margin-bottom: 4px;">Assigned Roster Passcodes (Demo Reference):</div>
-      ${crewMembers
-        .map((c) => `<div>&bull; ${AuthService.maskCrewName(c.name)} &rarr; Passcode: <strong style="color: var(--color-accent);">${c.passcode || 'crew1234'}</strong></div>`)
-        .join('')}
-    </div>
 
     <!-- BACK TO WELCOME LINK -->
     <div style="text-align: center; margin-top: var(--space-5);">

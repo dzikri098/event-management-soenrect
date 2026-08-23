@@ -302,9 +302,7 @@ export async function renderTimelineSchedule(
             itemType: 'timeline deadline',
             onConfirmDelete: async () => {
               await DataService.deleteTimelineEvent(id!);
-              const idx = timelineEvents.findIndex((evt) => evt.id === id);
-              if (idx !== -1) timelineEvents.splice(idx, 1);
-              renderTimelineContent();
+              renderTimelineSchedule(container, viewState);
             }
           }).open();
         }
